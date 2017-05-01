@@ -1,0 +1,23 @@
+Package: bicrnaseq
+Title: MSKCC Bioinformatics Core RNASeq
+Version: 0.0.0.9000
+Authors@R: person("Caitlin", "Jones", email = "byrne@cbio.mskcc.org", role = c("aut", "cre"))
+Description: All things RNASeq, as implemented by the Bioinformatics Core. Includes
+             wrappers around a variety of methods for read counting, normalization, 
+             differential expression analysis, and visualization. 
+Depends:
+    DESeq,
+    limma,
+    gplots,
+    MASS,
+    piano,
+    data.table,
+    RColorBrewer,
+    plyr,
+    reshape,
+    ggplot2,
+    scales
+License: What license is it under?
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 6.0.1
