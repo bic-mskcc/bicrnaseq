@@ -8,12 +8,14 @@ bic.average.by.name(dat)
 }
 \arguments{
 \item{dat}{a matrix where the first column may contain duplicate values
-(strings or numbers) and the second-Nth columns contains only numbers}
+(strings or numbers) and the second through Nth columns contain 
+only numbers}
 }
 \value{
 a matrix containing averages of values whose names were the
-        the same in the original matrix, plus the original values in the second-Nth 
-        columns of the input matrix whose 'names' were unique
+        the same in the original matrix, plus the original values in the 
+        second through Nth columns of the input matrix whose 'names' were 
+        unique
 }
 \description{
 Given a two-column matrix where the first column may contain duplicate 

@@ -9,7 +9,7 @@ bic.join.strings(x, str)
 \arguments{
 \item{x}{character vector}
 
-\item{str}{delimiter}
+\item{delimeter}{delimiter to join vector elements}
 }
 \value{
 a string

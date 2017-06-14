@@ -4,13 +4,16 @@
 \alias{bic.mds.clust.samples}
 \title{Plot MDS clustering of all samples}
 \usage{
-bic.mds.clust.samples(norm.counts, file = NULL, conds = NULL,
-  labels = TRUE)
+bic.mds.clust.samples(norm.counts, log2 = FALSE, file = NULL,
+  conds = NULL, labels = TRUE)
 }
 \arguments{
 \item{norm.counts}{data matrix containing normalized counts, where
 a column represents a sample and a row represents
 a gene}
+
+\item{log2}{logical indicating whether norm.counts is on log2 scale 
+Default: FALSE}
 
 \item{file}{PDF file to which plot should be saved (optional)}
 

@@ -1,3 +1,179 @@
+c3 <- c("#5395b4", "#f1592a", "#85c440")
+c48 <- c("#1d915c","#5395b4",
+                 "#964a48",
+                 "#2e3b42",
+                 "#b14e72",
+                 "#402630","#f1592a",
+                 "#81aa90","#f79a70", # lt pink
+                 "#b5ddc2",
+                 "#8fcc8b", # lt purple
+                 "#9f1f63", # lt orange
+                 "#865444", "#a7a9ac",
+                 "#d0e088","#7c885c","#d22628","#343822","#231f20",
+                 "#f5ee31","#a99fce","#54525e","#b0accc",
+                 "#5e5b73","#efcd9f", "#68705d", "#f8f391", "#faf7b6", "#c4be5d", "#764c29", "#c7ac74", "#8fa7aa", "#c8e7dd", "#766a4d", "#e3a291", "#5d777a", "#299c39", "#4055a5", "#b96bac", "#d97646", "#cebb2d", "#bf1e2e", "#d89028", "#85c440", "#36c1ce", "#574a9e")
+
+
+#' Arrange multiple plots on one page with one shared legend
+#' 
+#' Place multiple plots on one page, with a shared legend either at the right or at the bottom
+#'
+#' @param ...       ggplot objects
+#' @param ncol      number of columns
+#' @param nrow      number of rows
+#' @param main      main title
+#' @param position  position of legend ["bottom"|"right"]
+bic.grid.arrange.shared.legend <- function(..., ncol = length(list(...)), nrow = 1,
+                                           main = "", position = c("bottom", "right")) {
+  ## copied and pasted from 
+  ## https://github.com/tidyverse/ggplot2/wiki/share-a-legend-between-two-ggplot2-graphs
+
+  plots <- list(...)
+  position <- match.arg(position)
+  top <- textGrob(main,gp=gpar(fontsize=20))
+  g <- ggplotGrob(plots[[1]] + theme(legend.position = position))$grobs
+  legend <- g[[which(sapply(g, function(x) x$name) == "guide-box")]]
+  lheight <- sum(legend$height)
+  lwidth <- sum(legend$width)
+  gl <- lapply(plots, function(x) x + theme(legend.position="none"))
+  gl <- c(gl, ncol = ncol, nrow = nrow)
+  combined <- switch(position,
+                     "bottom" = arrangeGrob(do.call(arrangeGrob, gl),
+                                            legend,
+                                            ncol = 1,
+                                            top = top,
+                                            heights = unit.c(unit(1, "npc") - lheight, lheight)),
+                     "right" = arrangeGrob(do.call(arrangeGrob, gl),
+                                           legend,
+                                           ncol = 2,
+                                           top = top,
+                                           widths = unit.c(unit(1, "npc") - lwidth, lwidth)))
+  grid.newpage()
+  grid.draw(combined)
+
+  # return gtable invisibly
+  invisible(combined)
+}
+
+
+#' Plot RSeQC line metrics 
+#'
+#' Create a line chart for merged RSeQC metrics where the x axis is 
+#' a numerical value and the y axis is a count
+#' 
+#' @param dat         data frame where column1 contains read position for either 
+#'                    read 1 or read 2, and the remaining columns are metric values
+#'                    for each sample; position column name must be "Position"
+#' @param title       plot title
+#' @param dat2        second data frame with the same structure as dat1, to be plotted
+#'                    adjacent to the plot of dat (optional; used to plot data for read 
+#'                    1 and read 2 on one page)
+#' @param title2      title of second plot (optional)
+#' @param main        if plotting two datasets, this is the main title for the page
+#' @param col.pal     color palette (Default: "Set3")
+#' @param file        PDF file to which plot should be saved (optional)
+#'
+#' @export
+bic.plot.rseqc.line.chart <- function(dat,title,dat2=NULL,title2=NULL,main=NULL,col.pal="Set3",file=NULL){
+  width <- 10
+  height <- 10
+  p <- NULL
+  p2 <- NULL
+
+  dat.m <- melt(dat,id.vars=colnames(dat)[1])
+  p <- ggplot(dat.m,
+              aes(x = dat.m[1], y = as.numeric(value), color = variable)
+       ) +
+       geom_line(size=0.75) +
+       labs(title=title) +
+       xlab(colnames(dat)[1]) +
+       ylab("") +
+       theme(legend.position="none",aspect.ratio=4/3) +
+       scale_colour_brewer(direction=-1,name="Sample",palette=col.pal) +
+       scale_x_continuous()
+  ## only add legend to first plot if it is the only one
+  if(!is.null(dat2)){
+      width <- 14
+      dat2.m <- melt(dat2, id.vars=colnames(dat2)[1])
+      p2 <- ggplot(dat2.m,
+              aes(x = dat2.m[1], y = as.numeric(value), color = variable)
+         ) +
+         geom_line(size=0.75) +
+         theme(legend.position="none",aspect.ratio=4/3) +
+         labs(title=title2) +
+         xlab(colnames(dat)[1]) +
+         ylab("") +
+         scale_colour_brewer(direction=-1,name="Sample",palette=col.pal) +
+         scale_x_continuous() 
+  } else {
+    p <- p + theme(legend.position="right")
+  }
+  if(!is.null(file)){ 
+    pdf(file,onefile=FALSE,width=width,height=height)
+  }
+  if(!is.null(p2)){
+    bic.grid.arrange.shared.legend(p=p,p2=p2,ncol=2,main=main,position="right")
+  } else {
+    print(p) 
+  }
+  if(!is.null(file)){
+    dev.off()
+  }
+}
+
+
+#' Plot RSeQC read distribution stats
+#' 
+#' Plot distribution of reads across different genomic features
+#' like exons, introns, TSS, etc. for all samples in a project
+#' 
+#' @param dat      data frame containing merged output from multiple runs of
+#'                 RSeQC's read_distribution.py script, where rows are
+#'                 samples and columns are metrics; must contain "Samples" slot
+#'                 and may contain any other slots 
+#' @param pct      logical indicating that plot should show percentages
+#' @param stack    logical indicating that bar chart should be stacked; Default: TRUE
+#' @param col.pal  name of color palette; must be from list of RColorBrewer palettes
+#'                 Default: "Set3"
+#' @param file     PDF file to which plot should be saved (optional)
+#' @export
+bic.plot.read.distribution <- function(dat,file=NULL,stack=TRUE,pct=FALSE,col.pal="Set3"){
+  suppressMessages(dat.m <- melt(dat))
+
+  position <- "stack"
+  if(!stack){
+    position <- position_dodge(width=0.7)
+  }
+  if(pct){
+    position <- "fill"
+  }
+
+  p <- ggplot(dat.m, aes(x = Samples, y = value, fill = variable)) +
+    geom_bar(stat = "identity", position = position, width = 0.7, color = "black") +
+    theme(axis.text.x = element_text(angle=45,size=9,hjust=1,color="black"),
+          legend.position="right",
+          legend.title = element_blank()
+       ) +
+    labs(title="RSeQC Read Distribution") +
+    scale_fill_brewer(direction=1,palette=col.pal) +
+    xlab("") +
+    ylab("")
+
+  if(pct){
+    p <- p + scale_y_continuous(labels=percent)
+  }
+
+  if(!is.null(file)){
+    pdf(file)
+  }
+  print(p)
+  if(!is.null(file)){
+    dev.off()
+  }
+
+}
+
+
 #' Plot dispersion estimates
 #'
 #' Plot dispersion estimates for all conditions in experiment. Draw one
@@ -6,6 +182,7 @@
 #' @param cds          DESeq countsDataSet
 #' @param out.dir      Directory in which plots should be saved; Default: $PWD
 #' @param file.prefix  String to prepend to PDF file names (optional)
+#'
 #' @export
 bic.plot.dispersion.estimates <- function(cds,out.dir=getwd(),file.prefix=""){
   if(file.prefix != ""){
@@ -69,6 +246,7 @@ bic.deseq.heatmap <- function(cds,file=NULL,num.gns=100,transform=FALSE){
 #' @param cds    DESeq countDataSet
 #' @param conds  vector of sample conditions that was used to generate \code{cds}
 #' @param file   PDF file to which heatmap whould be saved (optional)
+#' 
 #' @export
 bic.sample.to.sample.distances <- function(cds,conds,file=NULL){
   #if(is.null(file)){
@@ -159,12 +337,12 @@ bic.pval.histogram <- function(dat,file=NULL){
 #' @param dat      data frame consisting of data from CollectRNASeqMetrics
 #'                 output
 #' @param col.pal  name of color palette; must be from list of RColorBrewer palettes
-#'                 Default: "Set2"
+#'                 Default: "Set3"
 #' @param file     PDF file to which plot should be saved (optional)
 #' @param pct      plot percentages
 #'
 #' @export
-bic.plot.alignment.distribution <- function(dat,pct=FALSE,col.pal="Set2",file=NULL){
+bic.plot.alignment.distribution <- function(dat,pct=FALSE,col.pal="Set3",file=NULL){
 
   y <- data.frame(Sample = dat$SAMPLE, 
                  Ribosomal = dat$RIBOSOMAL_BASES, 
@@ -186,11 +364,10 @@ bic.plot.alignment.distribution <- function(dat,pct=FALSE,col.pal="Set2",file=NU
   p <- ggplot(y.m, aes(x = Sample, y = value/1000000, fill = variable)) + 
     geom_bar(stat="identity", position=position, width=0.7, color="black")+
     theme(axis.text.x = element_text(angle=45,size=9,hjust=1,color="black"),
-        legend.position="bottom",
+        legend.position="right",
         legend.title = element_blank()
      ) + 
-    scale_fill_brewer(palette=col.pal) +      
-    #scale_fill_manual(name="Type", values = c3, labels = c("Ribosomal", "Coding", "UTR", "Intronic", "Intergenic")) + 
+    scale_fill_brewer(direction=1,palette=col.pal) +      
     labs(title="Alignment Distribution") + 
     xlab("") +  
     ylab(y.lbl)
@@ -206,36 +383,29 @@ bic.plot.alignment.distribution <- function(dat,pct=FALSE,col.pal="Set2",file=NU
   }
 }
 
-#' Plot coverage uniformity
+#' Plot coverage uniformity (5' and 3' bias)
 #' 
 #' Bar chart showing median CV coverage, median 5' and 3' bias,
 #' and median 5' to 3' bias for each sample.
 #'
 #' @param dat      data frame consisting of data from CollectRNASeqMetrics
 #'                 output
-#' @param pct      logical indicating that plot should show percentages
-#' @param stacked  logical indicating that bar chart should be stacked; Default: TRUE
 #' @param col.pal  name of color palette; must be from list of RColorBrewer palettes
-#'                 Default: "Set2"
-#' @param file PDF file to which plot should be saved (optional)
+#'                 Default: "Set3"
+#' @param file     PDF file to which plot should be saved (optional)
 #'
 #' @export
-bic.plot.5prime3prime.bias <- function(dat,pct=FALSE,stacked=TRUE,col.pal="Set2",file=NULL){
+bic.plot.5prime3prime.bias <- function(dat,col.pal="Set3",file=NULL){
 
   y <- data.frame(Sample = dat$SAMPLE,
                   cvCoverage = dat$MEDIAN_CV_COVERAGE,
                   fivePrimeBias = dat$MEDIAN_5PRIME_BIAS,
                   threePrimeBias = dat$MEDIAN_3PRIME_BIAS,
                   fivetoThreePrimeBias = dat$MEDIAN_5PRIME_TO_3PRIME_BIAS)
+
   suppressMessages(y.m <- melt(y))
 
-  position <- "stack"
-  if(!stacked){
-    position <- position_dodge(width=0.7)
-  }
-  if(pct){
-    position <- "fill"
-  }
+  position <- position_dodge(width=0.7)
 
   p <- ggplot(y.m, aes(x = Sample, y = value, fill = variable)) + 
     geom_bar(stat = "identity", position = position, width = 0.7, color = "black") + 
@@ -243,13 +413,10 @@ bic.plot.5prime3prime.bias <- function(dat,pct=FALSE,stacked=TRUE,col.pal="Set2"
           legend.position="right",
           legend.title = element_blank()
        ) +    
-    scale_fill_brewer(palette=col.pal, labels = c("Median CV of Coverage","Median 5\' Bias","Median 3\' Bias","Median 5\' to 3\' Bias")) +
+    scale_fill_brewer(direction=1,palette=col.pal, labels = c("Median CV of Coverage","Median 5\' Bias","Median 3\' Bias","Median 5\' to 3\' Bias")) +
     labs(title="Coverage Uniformity") + 
     xlab("") + 
     ylab("")
-  if(pct){
-    p <- p + scale_y_continuous(labels=percent)
-  }
 
   if(!is.null(file)){
     pdf(file)
@@ -267,12 +434,12 @@ bic.plot.5prime3prime.bias <- function(dat,pct=FALSE,stacked=TRUE,col.pal="Set2"
 #'
 #' @param dat  data frame containing combined histograms from collectrnaseqmetrics
 #' @param col.pal  name of color palette; must be from list of RColorBrewer palettes
-#'                 Default: "Set2"
+#'                 Default: "Set3"
 #' @param file PDF file to which plot should be saved (optional)
 #' @export
-bic.plot.coverage <- function(dat,col.pal="Set2",file=NULL){
+bic.plot.coverage <- function(dat,col.pal="Set3",file=NULL){
 
-  suppressMessages(x.m <- melt(dat, id.vars="position",col.pal=col.pal))
+  suppressMessages(x.m <- melt(dat, id.vars="position"))
   x.m$position <- as.integer(as.character(x.m$position))
   p <-  ggplot(x.m, aes(x = position, y = value, color = variable)) +  
         geom_line(size=0.7) + 
@@ -283,7 +450,7 @@ bic.plot.coverage <- function(dat,col.pal="Set2",file=NULL){
         labs(title="Normalized Coverage") + 
          xlab("Read position") + 
          ylab("") +
-         scale_fill_brewer(palette=col.pal) 
+         scale_colour_brewer(direction=-1,name="Sample",palette=col.pal) 
          #scale_color_hue(colnames(dat)[-1]) + 
          #guides(colour = guide_legend(override.aes = list(size=5)))
   if(!is.null(file)){
@@ -304,18 +471,19 @@ bic.plot.coverage <- function(dat,col.pal="Set2",file=NULL){
 #' columns: CATEGORY, PF_READS, PF_READS_ALIGNED, SAMPLE, where CATEGORY column
 #' contains at least categories FIRST_OF_PAIR and SECOND_OF_PAIR.
 #'
-#' @param dat  data frame of PICARD AlignmentSummaryMetrics, or at least 
-#'             containing columns CATEGORY, PF_READS, PF_READS_ALIGNED and 
-#'             SAMPLE, where CATEGORY contains at least values FIRST_OF_PAIR
-#'             and SECOND_OF_PAIR
-#' @param pct  logical indicating whether to show percentages rather than absolute
-#'             read counts
+#' @param dat      data frame of PICARD AlignmentSummaryMetrics, or at least 
+#'                 containing columns CATEGORY, PF_READS, PF_READS_ALIGNED and 
+#'                 SAMPLE, where CATEGORY contains at least values FIRST_OF_PAIR
+#'                 and SECOND_OF_PAIR
+#' @param pct      logical indicating whether to show percentages rather than absolute
+#'                 read counts
 #' @param col.pal  name of color palette; must be from list of RColorBrewer palettes
-#'                 Default: "Set2"
-#' @param file PDF file to which plot should be saved (optional)
+#'                 Default: "Set3"
+#' @param position position of grouped bars; Default: "stack", option: "dodge"
+#' @param file     PDF file to which plot should be saved (optional)
 #'
 #' @export
-bic.plot.alignment.summary <- function(dat,pct=FALSE,col.pal="Set2",file=NULL){
+bic.plot.alignment.summary <- function(dat,position="stack",pct=FALSE,col.pal="Set3",file=NULL){
   dat <- dat[-which(dat$CATEGORY=="PAIR"),]
   dat$UNMAPPED <- dat$PF_READS-dat$PF_READS_ALIGNED
   dat <- dat[,c("CATEGORY","PF_READS","UNMAPPED","SAMPLE")]
@@ -323,7 +491,6 @@ bic.plot.alignment.summary <- function(dat,pct=FALSE,col.pal="Set2",file=NULL){
   colnames(dat) <- c("Category","MappedReads","UnmappedReads","Sample")
   suppressMessages(dat.m <- melt(dat))
   
-  position <- "stack"
   cat.lbl.y <- -2
   y.lbl <- "Reads (xMillion)"
   if(pct){ 
@@ -333,17 +500,16 @@ bic.plot.alignment.summary <- function(dat,pct=FALSE,col.pal="Set2",file=NULL){
   }
 
   p <- ggplot(dat.m[which(dat.m$variable!="Total"),], aes(x=Category, y=value/1000000, fill=variable)) + 
-   geom_bar(stat="identity", position=position) +
+   geom_bar(stat="identity", position=position, colour="black") +
    facet_wrap( ~ Sample, nrow=1, strip.position="bottom") + 
    geom_text(data=dat.m[which(dat.m$variable=="MappedReads"),], mapping=aes(x=Category, y=cat.lbl.y, label=Category), vjust=0) +
    theme(axis.text.x = element_blank(),
       axis.ticks=element_blank(),
       legend.position="right",
       legend.title = element_blank(),
-      strip.text.x = element_text(size = 9,color="black",angle=90, hjust=0.5, vjust=1)#,
-      #plot.title = element_text(hjust = 0.5)
+      strip.text.x = element_text(size = 9,color="black",angle=90, hjust=0.5, vjust=1)
     ) +
-  scale_fill_brewer(palette=col.pal) + 
+  scale_fill_brewer(direction=1,palette=col.pal) + 
   labs(title="Alignment Summary") + 
   xlab("") +
   ylab(y.lbl)
@@ -399,10 +565,11 @@ bic.pdf.hclust<-function(dat,file.name="tmp.pdf",title="",width=26,height=16,lwd
 #'                     a column represents a sample and a row represents
 #'                     a gene. may or may not contain "GeneID" and "GeneSymbol"
 #'                     columns.
+#' @param log2         logical indicating whether data is on log2 scale (Default: FALSE)
 #' @param file.name    plot will be saved in this file; Default: 
 #'                     $PWD/counts_scaled_hclust.pdf
 #' @export
-bic.hclust.samples <- function(norm.counts,file.name=NULL){
+bic.hclust.samples <- function(norm.counts,log2=FALSE,file.name=NULL){
 
   if("GeneID" %in% colnames(norm.counts) | 
      "GeneSymbol" %in% colnames(norm.counts)){
@@ -419,9 +586,12 @@ bic.hclust.samples <- function(norm.counts,file.name=NULL){
     file.name <- "counts_scaled_hclust.pdf"
   }
   
-  pseudo <- min(norm.counts[norm.counts > 0])
-  counts2hclust <- log2(norm.counts + pseudo)
-
+  if(log2==FALSE){
+    pseudo <- min(norm.counts[norm.counts > 0])
+    counts2hclust <- log2(norm.counts + pseudo)
+  } else {
+    counts2hclust <- norm.counts
+  }
   sink("/dev/null")
   tryCatch({
       bic.pdf.hclust(counts2hclust,file.name=file.name,title="All counts scaled using DESeq method")
@@ -444,10 +614,12 @@ bic.hclust.samples <- function(norm.counts,file.name=NULL){
 #' @param conds        vector of conditions to be appended to sample IDs
 #'                     for labeling
 #' @param file         PDF file to which plot should be saved (optional)
+#' @param log2         logical indicating whether norm.counts is on log2 scale 
+#'                     Default: FALSE
 #' @param labels       logical indicating whether to include sample labels on plot; 
 #'                     Default: TRUE
 #' @export
-bic.mds.clust.samples <- function(norm.counts,file=NULL,conds=NULL,labels=TRUE){
+bic.mds.clust.samples <- function(norm.counts,log2=FALSE,file=NULL,conds=NULL,labels=TRUE){
 
   if("GeneID" %in% colnames(norm.counts) |
      "GeneSymbol" %in% colnames(norm.counts)){
@@ -465,13 +637,19 @@ bic.mds.clust.samples <- function(norm.counts,file=NULL,conds=NULL,labels=TRUE){
     conds=rep('s',length(colnames(norm.counts)))
   }
 
-  pseudo <- min(norm.counts[norm.counts > 0])
-  counts2hclust <- log2(norm.counts + pseudo)
+  if(log2==FALSE){
+    pseudo <- min(norm.counts[norm.counts > 0])
+    counts2hclust <- log2(norm.counts + pseudo)
+  } else {
+    counts2hclust <- norm.counts
+  }
+
   md <- cmdscale(dist(t(counts2hclust)),2)
 
   if(!is.null(file)){
     pdf(file,width=18,height=12)
   }
+
   if(labels){
     plot(md, col=as.factor(conds),main="",lwd=2.5,cex=1.5)
     legend("topleft", levels(as.factor(conds)),col=as.factor(levels(as.factor(conds))),pch=1,cex=1.2)
@@ -505,7 +683,8 @@ bic.mds.clust.samples <- function(norm.counts,file=NULL,conds=NULL,labels=TRUE){
 #'                            if normalized counts matrix includes "GeneSymbol" column,
 #'                            genes must be from that column. Otherwise, they must
 #'                            be from the "GeneID" column.                      
-#' @param file            name of PDF file to which heatmap should be written. (optional) 
+#' @param file                name of PDF file to which heatmap should be written. (optional) 
+#' 
 #' @export
 bic.standard.heatmap <- function(norm.counts.matrix,condA,condB,genes=NULL,file=NULL){
 

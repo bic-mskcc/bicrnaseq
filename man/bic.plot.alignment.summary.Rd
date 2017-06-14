@@ -4,7 +4,7 @@
 \alias{bic.plot.alignment.summary}
 \title{Plot numbers of mapped and unmapped reads for each sample}
 \usage{
-bic.plot.alignment.summary(dat, pct = FALSE, col.pal = "Set2",
+bic.plot.alignment.summary(dat, pct = FALSE, col.pal = "Spectral",
   file = NULL)
 }
 \arguments{
@@ -17,7 +17,7 @@ and SECOND_OF_PAIR}
 read counts}
 
 \item{col.pal}{name of color palette; must be from list of RColorBrewer palettes
-Default: "Set2"}
+Default: "Spectral"}
 
 \item{file}{PDF file to which plot should be saved (optional)}
 }

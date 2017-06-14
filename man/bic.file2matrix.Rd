@@ -11,9 +11,9 @@ bic.file2matrix(dat, header = FALSE, sep = "", skip = 0)
 
 \item{header}{logical to indicate whether file contains a header. Default: FALSE}
 
-\item{sep}{delimiter in file}
+\item{sep}{delimiter in file (Default: "")}
 
-\item{skip}{number of lines to skip before reading file}
+\item{skip}{number of lines to skip before reading file (Default: 0)}
 }
 \description{
 Read data file and return as a matrix

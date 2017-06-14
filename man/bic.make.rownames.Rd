@@ -13,7 +13,7 @@ bic.make.rownames(dat, nn = 1)
 \item{nn}{column to be removed and used as row names}
 }
 \value{
-data matrix with new rownames and one less column
+matrix with new rownames and one less column
 }
 \description{
 Shortcut to assigning row names to a matrix of data read in from 

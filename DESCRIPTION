@@ -4,10 +4,13 @@ Version: 0.0.0.9000
 Authors@R: person("Caitlin", "Jones", email = "byrne@cbio.mskcc.org", role = c("aut", "cre"))
 Description: All things RNASeq, as implemented by the Bioinformatics Core. Includes
              wrappers around a variety of methods for read counting, normalization, 
-             differential expression analysis, and visualization. 
+             differential expression analysis, and visualization. NOTE: this is the
+             first iteration of this package and most functions are currently written
+             to be used specifically within the BIC RNASeq pipeline. Plans for future 
+             versions include more flexible functions that will be able to be used
+             independently of the pipeline. 
 Depends:
-    DESeq,
-    limma,
+    DESeq,limma,
     gplots,
     MASS,
     piano,
@@ -16,6 +19,8 @@ Depends:
     plyr,
     reshape,
     ggplot2,
+    grid,
+    gridExtra,
     scales
 License: What license is it under?
 Encoding: UTF-8

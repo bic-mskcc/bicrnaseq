@@ -5,7 +5,7 @@
 \title{Plot coverage uniformity}
 \usage{
 bic.plot.5prime3prime.bias(dat, pct = FALSE, stacked = TRUE,
-  col.pal = "Set2", file = NULL)
+  col.pal = "Spectral", file = NULL)
 }
 \arguments{
 \item{dat}{data frame consisting of data from CollectRNASeqMetrics
@@ -16,7 +16,7 @@ output}
 \item{stacked}{logical indicating that bar chart should be stacked; Default: TRUE}
 
 \item{col.pal}{name of color palette; must be from list of RColorBrewer palettes
-Default: "Set2"}
+Default: "Spectral"}
 
 \item{file}{PDF file to which plot should be saved (optional)}
 }
