@@ -5,7 +5,7 @@
 \title{Arrange multiple plots on one page with one shared legend}
 \usage{
 bic.grid.arrange.shared.legend(..., ncol = length(list(...)), nrow = 1,
-  position = c("bottom", "right"))
+  main = "", position = c("bottom", "right"))
 }
 \arguments{
 \item{...}{ggplot objects}
@@ -13,6 +13,8 @@ bic.grid.arrange.shared.legend(..., ncol = length(list(...)), nrow = 1,
 \item{ncol}{number of columns}
 
 \item{nrow}{number of rows}
+
+\item{main}{main title}
 
 \item{position}{position of legend ["bottom"|"right"]}
 }

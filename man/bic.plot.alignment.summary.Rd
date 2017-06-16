@@ -4,8 +4,8 @@
 \alias{bic.plot.alignment.summary}
 \title{Plot numbers of mapped and unmapped reads for each sample}
 \usage{
-bic.plot.alignment.summary(dat, pct = FALSE, col.pal = "Spectral",
-  file = NULL)
+bic.plot.alignment.summary(dat, position = "stack", pct = FALSE,
+  col.pal = "Set3", file = NULL)
 }
 \arguments{
 \item{dat}{data frame of PICARD AlignmentSummaryMetrics, or at least 
@@ -13,11 +13,13 @@ containing columns CATEGORY, PF_READS, PF_READS_ALIGNED and
 SAMPLE, where CATEGORY contains at least values FIRST_OF_PAIR
 and SECOND_OF_PAIR}
 
+\item{position}{position of grouped bars; Default: "stack", option: "dodge"}
+
 \item{pct}{logical indicating whether to show percentages rather than absolute
 read counts}
 
 \item{col.pal}{name of color palette; must be from list of RColorBrewer palettes
-Default: "Spectral"}
+Default: "Set3"}
 
 \item{file}{PDF file to which plot should be saved (optional)}
 }

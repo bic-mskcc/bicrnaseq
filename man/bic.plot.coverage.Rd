@@ -4,13 +4,13 @@
 \alias{bic.plot.coverage}
 \title{Plot normalized coverage}
 \usage{
-bic.plot.coverage(dat, col.pal = "Spectral", file = NULL)
+bic.plot.coverage(dat, col.pal = "Set3", file = NULL)
 }
 \arguments{
 \item{dat}{data frame containing combined histograms from collectrnaseqmetrics}
 
 \item{col.pal}{name of color palette; must be from list of RColorBrewer palettes
-Default: "Spectral"}
+Default: "Set3"}
 
 \item{file}{PDF file to which plot should be saved (optional)}
 }

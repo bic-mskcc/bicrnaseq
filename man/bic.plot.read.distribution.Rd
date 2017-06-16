@@ -4,8 +4,8 @@
 \alias{bic.plot.read.distribution}
 \title{Plot RSeQC read distribution stats}
 \usage{
-bic.plot.read.distribution(dat, file = NULL, stacked = TRUE, pct = FALSE,
-  col.pal = "Spectral")
+bic.plot.read.distribution(dat, file = NULL, stack = TRUE, pct = FALSE,
+  col.pal = "Set3")
 }
 \arguments{
 \item{dat}{data frame containing merged output from multiple runs of
@@ -15,12 +15,12 @@ and may contain any other slots}
 
 \item{file}{PDF file to which plot should be saved (optional)}
 
-\item{stacked}{logical indicating that bar chart should be stacked; Default: TRUE}
+\item{stack}{logical indicating that bar chart should be stacked; Default: TRUE}
 
 \item{pct}{logical indicating that plot should show percentages}
 
 \item{col.pal}{name of color palette; must be from list of RColorBrewer palettes
-Default: "Spectral"}
+Default: "Set3"}
 }
 \description{
 Plot distribution of reads across different genomic features

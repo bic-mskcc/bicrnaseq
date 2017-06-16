@@ -55,6 +55,43 @@ bic.grid.arrange.shared.legend <- function(..., ncol = length(list(...)), nrow =
   invisible(combined)
 }
 
+#' Check formatting of input to bic.plot.rseqc.line.chart()
+#'
+#' Ensure object(s) passed to 'dat' and/or 'dat2' arguments of bic.plot.rseqc.line.chart()
+#' are data frames where column one contains integers in order from least to greatest,
+#' and each remaining column contains metric values for one sample
+bic.check.line.chart.data <- function(dat,dat2=NULL){
+  if(is.unsorted(dat[,1],strictly=TRUE)){
+    stop("first data set must be sorted by first column")
+  }
+  tryCatch({apply(dat[,-1],1,as.numeric)},
+    warning = function(w){
+      stop("first data set contains non-numeric values")
+    },
+    error = function(e){
+        stop("first data set contains non-numeric values")
+    }
+  )
+  if(!is.null(dat2)){
+    if(is.unsorted(dat2[,1],strictly=TRUE)){
+      stop("second data set must be sorted by first column")
+    }
+    tryCatch({apply(dat2[,-1],1,as.numeric)},
+      warning = function(w){
+        stop("second data set contains non-numeric values")
+      },
+      error = function(e){
+        stop("second data set contains non-numeric values")
+      }
+    )
+    if(!all(dim(dat) == dim(dat2))){
+      stop(paste("first and second data sets have different dimensions\n\tdim(dat) = ",
+                 dim(dat),"\tdim(dat2) = ",dim(dat2),sep="")
+          )
+    }
+  }
+  invisible(NULL)
+} 
 
 #' Plot RSeQC line metrics 
 #'
@@ -79,6 +116,9 @@ bic.plot.rseqc.line.chart <- function(dat,title,dat2=NULL,title2=NULL,main=NULL,
   height <- 10
   p <- NULL
   p2 <- NULL
+
+  ## validate input 
+  bic.check.rseqc.line.chart.data(dat,dat2=dat2)
 
   dat.m <- melt(dat,id.vars=colnames(dat)[1])
   p <- ggplot(dat.m,
@@ -121,6 +161,20 @@ bic.plot.rseqc.line.chart <- function(dat,title,dat2=NULL,title2=NULL,main=NULL,
   }
 }
 
+#' Check formatting of input to bic.plot.read.distribution()
+#'
+#' Ensure object(s) passed to 'dat' argument of bic.plot.read.distribution()
+#' is a data frame containing a 'Samples' slot and at least one other slot
+#' containing data to plot
+bic.check.read.distribution.data <- function(dat){
+  if(!"Samples" %in% colnames(dat)){
+    stop("data set must contain a 'Samples' column")
+  }
+  if(dim(dat)[2] < 2){
+    stop("Data frame does not contain any data")
+  }
+  invisible(NULL)  
+}
 
 #' Plot RSeQC read distribution stats
 #' 
@@ -138,6 +192,10 @@ bic.plot.rseqc.line.chart <- function(dat,title,dat2=NULL,title2=NULL,main=NULL,
 #' @param file     PDF file to which plot should be saved (optional)
 #' @export
 bic.plot.read.distribution <- function(dat,file=NULL,stack=TRUE,pct=FALSE,col.pal="Set3"){
+
+  ## validate input
+  bic.check.read.distribution.data(dat)
+
   suppressMessages(dat.m <- melt(dat))
 
   position <- "stack"
@@ -328,6 +386,45 @@ bic.pval.histogram <- function(dat,file=NULL){
   }
 }
 
+#' Validate alignment distribution data from CollectRnaSeqMetrics
+#'
+#' Check that data frame contains the correct column names and that
+#' all data is numeric
+#'
+#' @param dat    data frame passed to plot function
+#' @param name   name of plot (Options: ["alignment.distribution" |
+#'                                       "5prime3prime.bias"]
+bic.check.collectrnaseqmetrics.data <- function(dat,name){
+  required.slots <- switch(name,
+                           "alignment.distribution" = c("SAMPLE","RIBOSOMAL_BASES","CODING_BASES",
+                                                      "UTR_BASES","INTRONIC_BASES","INTERGENIC_BASES"),
+                           "5prime3prime.bias" = c("SAMPLE","MEDIAN_CV_COVERAGE","MEDIAN_5PRIME_BIAS",
+                                                 "MEDIAN_3PRIME_BIAS","MEDIAN_5PRIME_TO_3PRIME_BIAS")
+                          )
+  missing.slots = c()
+  for(rs in required.slots){
+    if (!rs %in% colnames(dat)){
+      missing.slots = c(missing.slots,rs)
+    }
+  }
+  if(length(missing.slots) > 0){
+    stop(paste("alignment distribution data is missing the following columns: ",
+               paste(missing.slots,collapse=", "),
+               sep="")
+        )
+  }
+  tryCatch({apply(dat[,required.slots[-which(required.slots=="SAMPLE")]],1,as.numeric)},
+    warning = function(w){
+      stop("data set contains non-numeric values")
+    },
+    error = function(e){
+      stop("data set contains non-numeric values")
+    }
+  )
+  invisible(NULL)
+}
+
+
 #' Plot distibution of alignment across different genomic locations
 #'
 #' Bar chart showing for each sample the distribution of read
@@ -343,7 +440,8 @@ bic.pval.histogram <- function(dat,file=NULL){
 #'
 #' @export
 bic.plot.alignment.distribution <- function(dat,pct=FALSE,col.pal="Set3",file=NULL){
-
+  ## validate data
+  bic.check.collectrnaseqmetrics.data(dat,"alignment.distribution")
   y <- data.frame(Sample = dat$SAMPLE, 
                  Ribosomal = dat$RIBOSOMAL_BASES, 
                  Coding = dat$CODING_BASES,
@@ -396,7 +494,8 @@ bic.plot.alignment.distribution <- function(dat,pct=FALSE,col.pal="Set3",file=NU
 #'
 #' @export
 bic.plot.5prime3prime.bias <- function(dat,col.pal="Set3",file=NULL){
-
+  ## validate data
+  bic.check.collectrnaseqmetrics.data(dat,"5prime3prime.bias")
   y <- data.frame(Sample = dat$SAMPLE,
                   cvCoverage = dat$MEDIAN_CV_COVERAGE,
                   fivePrimeBias = dat$MEDIAN_5PRIME_BIAS,

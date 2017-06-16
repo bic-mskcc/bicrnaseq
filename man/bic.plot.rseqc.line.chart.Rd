@@ -5,7 +5,7 @@
 \title{Plot RSeQC line metrics}
 \usage{
 bic.plot.rseqc.line.chart(dat, title, dat2 = NULL, title2 = NULL,
-  main.title = NULL, col.pal = "Spectral", file = NULL)
+  main = NULL, col.pal = "Set3", file = NULL)
 }
 \arguments{
 \item{dat}{data frame where column1 contains read position for either 
@@ -20,9 +20,9 @@ adjacent to the plot of dat (optional; used to plot data for read
 
 \item{title2}{title of second plot (optional)}
 
-\item{main.title}{if plotting two datasets, this is the main title for the page}
+\item{main}{if plotting two datasets, this is the main title for the page}
 
-\item{col.pal}{color palette (Default: "Spectral")}
+\item{col.pal}{color palette (Default: "Set3")}
 
 \item{file}{PDF file to which plot should be saved (optional)}
 }

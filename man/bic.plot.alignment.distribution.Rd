@@ -4,7 +4,7 @@
 \alias{bic.plot.alignment.distribution}
 \title{Plot distibution of alignment across different genomic locations}
 \usage{
-bic.plot.alignment.distribution(dat, pct = FALSE, col.pal = "Spectral",
+bic.plot.alignment.distribution(dat, pct = FALSE, col.pal = "Set3",
   file = NULL)
 }
 \arguments{
@@ -14,7 +14,7 @@ output}
 \item{pct}{plot percentages}
 
 \item{col.pal}{name of color palette; must be from list of RColorBrewer palettes
-Default: "Spectral"}
+Default: "Set3"}
 
 \item{file}{PDF file to which plot should be saved (optional)}
 }

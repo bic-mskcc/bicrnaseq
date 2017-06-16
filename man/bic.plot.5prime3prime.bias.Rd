@@ -2,21 +2,16 @@
 % Please edit documentation in R/bic_plots.R
 \name{bic.plot.5prime3prime.bias}
 \alias{bic.plot.5prime3prime.bias}
-\title{Plot coverage uniformity}
+\title{Plot coverage uniformity (5' and 3' bias)}
 \usage{
-bic.plot.5prime3prime.bias(dat, pct = FALSE, stacked = TRUE,
-  col.pal = "Spectral", file = NULL)
+bic.plot.5prime3prime.bias(dat, col.pal = "Set3", file = NULL)
 }
 \arguments{
 \item{dat}{data frame consisting of data from CollectRNASeqMetrics
 output}
 
-\item{pct}{logical indicating that plot should show percentages}
-
-\item{stacked}{logical indicating that bar chart should be stacked; Default: TRUE}
-
 \item{col.pal}{name of color palette; must be from list of RColorBrewer palettes
-Default: "Spectral"}
+Default: "Set3"}
 
 \item{file}{PDF file to which plot should be saved (optional)}
 }
