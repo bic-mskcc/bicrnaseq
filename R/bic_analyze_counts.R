@@ -78,23 +78,23 @@ bic.scale.factor.quantile <- function(raw.counts,percentile="75%"){
 #' be of interest.
 #'
 #' @param countDataSet  A countDataSet object created by running DESeq's newCountDataSet()
-#' @param conds  Vector of sample conditons, in the same order as samples 
-#'                    in raw count matrix
-#' @param condA  The first condition in comparison (must be in conditions vector)
-#' @param condB  The second condition in comparison (must be in conditions vector)
-#' @param max.p  A number, the max p-value cutoff to determine which genes are 
-#'               considered differentially expressed; Default: 0.05
-#' @param min.abs.fc  A number, the minimum absolute fold change cutoff to determine 
-#'                    which genes are considered differentially expressed; Default: 2
-#' @param min.count  A number, minimum average number of reads in one condition; 
-#'                   Default: 10
-#' @param zeroaddQ  Logical, indicates whether to include genes that have zero 
-#'                  counts in one condition and insignificant p-value, but at 
-#'                  least min.count/mean(sizeFactors) in the other condition; 
-#'                  Default: FALSE
-#' @param genes  A named vector of gene symbols, where the names are equivalent 
-#'               to the IDs in the original raw count matrix (e.g., Ensembl IDs); 
-#'               Default: NULL
+#' @param conds         Vector of sample conditons, in the same order as samples 
+#'                      in raw count matrix
+#' @param condA         The first condition in comparison (must be in conditions vector)
+#' @param condB         The second condition in comparison (must be in conditions vector)
+#' @param max.p         A number, the max p-value cutoff to determine which genes are 
+#'                      considered differentially expressed; Default: 0.05
+#' @param min.abs.fc    A number, the minimum absolute fold change cutoff to determine 
+#'                      which genes are considered differentially expressed; Default: 2
+#' @param min.count     A number, minimum average number of reads in one condition; 
+#'                      Default: 10
+#' @param zeroaddQ      Logical, indicates whether to include genes that have zero 
+#'                      counts in one condition and insignificant p-value, but at 
+#'                      least min.count/mean(sizeFactors) in the other condition; 
+#'                      Default: FALSE
+#' @param genes         A named vector of gene symbols, where the names are equivalent 
+#'                      to the IDs in the original raw count matrix (e.g., Ensembl IDs); 
+#'                      Default: NULL
 #' @return List containing a matrix of ALL results, a matrix containing results
 #'         for differentially expressed genes (as determined by cutoffs), a vector
 #'         of DE genes, the cutoffs used in analysis, and norm factors (TO DO: reword this) 
