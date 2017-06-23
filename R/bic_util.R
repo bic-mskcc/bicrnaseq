@@ -4,15 +4,15 @@
 #' items in the vector, separated by the given delimiter
 #' 
 #' @param x          character vector
-#' @param delimeter  delimiter to join vector elements
+#' @param delim      delimiter to join vector elements
 #' 
 #' @return a string
 #'
 #' @export
-bic.join.strings<-function(x, str){
+bic.join.strings<-function(x, delim){
   tmp=""
   for(i in 1:length(x)){
-    tmp=paste(tmp,x[i], str, sep="")
+    tmp=paste(tmp,x[i], delim, sep="")
   }
   return(tmp)
 }
