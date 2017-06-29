@@ -6,6 +6,9 @@
 \usage{
 bic.check.read.distribution.data(dat)
 }
+\arguments{
+\item{dat}{data frame passed to plot function}
+}
 \description{
 Ensure object(s) passed to 'dat' argument of bic.plot.read.distribution()
 is a data frame containing a 'Samples' slot and at least one other slot

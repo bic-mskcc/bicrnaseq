@@ -60,6 +60,9 @@ bic.grid.arrange.shared.legend <- function(..., ncol = length(list(...)), nrow =
 #' Ensure object(s) passed to 'dat' and/or 'dat2' arguments of bic.plot.rseqc.line.chart()
 #' are data frames where column one contains integers in order from least to greatest,
 #' and each remaining column contains metric values for one sample
+#' 
+#' @param  dat   data frame passed to plot function
+#' @param  dat2  second data frame passed to plot function (optional)
 bic.check.line.chart.data <- function(dat,dat2=NULL){
   if(is.unsorted(dat[,1],strictly=TRUE)){
     stop("first data set must be sorted by first column")
@@ -118,7 +121,7 @@ bic.plot.rseqc.line.chart <- function(dat,title,dat2=NULL,title2=NULL,main=NULL,
   p2 <- NULL
 
   ## validate input 
-  bic.check.rseqc.line.chart.data(dat,dat2=dat2)
+  bic.check.line.chart.data(dat,dat2=dat2)
 
   dat.m <- melt(dat,id.vars=colnames(dat)[1])
   p <- ggplot(dat.m,
@@ -166,6 +169,8 @@ bic.plot.rseqc.line.chart <- function(dat,title,dat2=NULL,title2=NULL,main=NULL,
 #' Ensure object(s) passed to 'dat' argument of bic.plot.read.distribution()
 #' is a data frame containing a 'Samples' slot and at least one other slot
 #' containing data to plot
+#' 
+#' @param  dat  data frame passed to plot function 
 bic.check.read.distribution.data <- function(dat){
   if(!"Samples" %in% colnames(dat)){
     stop("data set must contain a 'Samples' column")
@@ -386,20 +391,22 @@ bic.pval.histogram <- function(dat,file=NULL){
   }
 }
 
-#' Validate alignment distribution data from CollectRnaSeqMetrics
+#' Validate data from PICARD CollectRnaSeqMetrics or AlignmentSummaryMetrics
 #'
 #' Check that data frame contains the correct column names and that
 #' all data is numeric
 #'
 #' @param dat    data frame passed to plot function
 #' @param name   name of plot (Options: ["alignment.distribution" |
-#'                                       "5prime3prime.bias"]
-bic.check.collectrnaseqmetrics.data <- function(dat,name){
+#'                                       "5prime3prime.bias" |
+#'                                       "alignment.summary"]
+bic.check.picard.data <- function(dat,name){
   required.slots <- switch(name,
                            "alignment.distribution" = c("SAMPLE","RIBOSOMAL_BASES","CODING_BASES",
                                                       "UTR_BASES","INTRONIC_BASES","INTERGENIC_BASES"),
                            "5prime3prime.bias" = c("SAMPLE","MEDIAN_CV_COVERAGE","MEDIAN_5PRIME_BIAS",
-                                                 "MEDIAN_3PRIME_BIAS","MEDIAN_5PRIME_TO_3PRIME_BIAS")
+                                                 "MEDIAN_3PRIME_BIAS","MEDIAN_5PRIME_TO_3PRIME_BIAS"),
+                           "alignment.summary" = c("SAMPLE","CATEGORY","PF_READS","PF_READS_ALIGNED")
                           )
   missing.slots = c()
   for(rs in required.slots){
@@ -408,12 +415,12 @@ bic.check.collectrnaseqmetrics.data <- function(dat,name){
     }
   }
   if(length(missing.slots) > 0){
-    stop(paste("alignment distribution data is missing the following columns: ",
+    stop(paste("data is missing the following required column(s): ",
                paste(missing.slots,collapse=", "),
                sep="")
         )
   }
-  tryCatch({apply(dat[,required.slots[-which(required.slots=="SAMPLE")]],1,as.numeric)},
+  tryCatch({apply(dat[,required.slots[-grep("SAMPLE|CATEGORY",required.slots)]],1,as.numeric)},
     warning = function(w){
       stop("data set contains non-numeric values")
     },
@@ -421,6 +428,11 @@ bic.check.collectrnaseqmetrics.data <- function(dat,name){
       stop("data set contains non-numeric values")
     }
   )
+  if(name=="alignment.summary"){
+    if(!"FIRST_IN_PAIR" %in% dat$CATEGORY | !"SECOND_IN_PAIR" %in% dat$CATEGORY){
+      stop("'CATEGORY' column must contain at least one instance of 'FIRST_IN_PAIR' and one of 'SECOND_IN_PAIR'")
+    }
+  }
   invisible(NULL)
 }
 
@@ -441,7 +453,7 @@ bic.check.collectrnaseqmetrics.data <- function(dat,name){
 #' @export
 bic.plot.alignment.distribution <- function(dat,pct=FALSE,col.pal="Set3",file=NULL){
   ## validate data
-  bic.check.collectrnaseqmetrics.data(dat,"alignment.distribution")
+  bic.check.picard.data(dat,"alignment.distribution")
   y <- data.frame(Sample = dat$SAMPLE, 
                  Ribosomal = dat$RIBOSOMAL_BASES, 
                  Coding = dat$CODING_BASES,
@@ -495,7 +507,7 @@ bic.plot.alignment.distribution <- function(dat,pct=FALSE,col.pal="Set3",file=NU
 #' @export
 bic.plot.5prime3prime.bias <- function(dat,col.pal="Set3",file=NULL){
   ## validate data
-  bic.check.collectrnaseqmetrics.data(dat,"5prime3prime.bias")
+  bic.check.picard.data(dat,"5prime3prime.bias")
   y <- data.frame(Sample = dat$SAMPLE,
                   cvCoverage = dat$MEDIAN_CV_COVERAGE,
                   fivePrimeBias = dat$MEDIAN_5PRIME_BIAS,
@@ -583,6 +595,9 @@ bic.plot.coverage <- function(dat,col.pal="Set3",file=NULL){
 #'
 #' @export
 bic.plot.alignment.summary <- function(dat,position="stack",pct=FALSE,col.pal="Set3",file=NULL){
+  ## validate input data
+  bic.check.picard.data(dat,"alignment.summary")
+
   dat <- dat[-which(dat$CATEGORY=="PAIR"),]
   dat$UNMAPPED <- dat$PF_READS-dat$PF_READS_ALIGNED
   dat <- dat[,c("CATEGORY","PF_READS","UNMAPPED","SAMPLE")]
@@ -631,9 +646,12 @@ bic.plot.alignment.summary <- function(dat,position="stack",pct=FALSE,col.pal="S
 #' parameters like width, height, font size, etc.
 #' 
 #' @param dat            matrix containing data to plot
-#' @param file.name      file name. Default: "tmp.pdf"
+#' @param file.name      PDF file to which plot should be saved; Default: NULL 
 #' @param title          Title of plot
-#' @param sample.labels  Vector of sample labels. Default: column names in matrix
+#' @param sample.labels  Vector of sample labels; Default: column names in matrix
+#' @param conds          vector of sample conditions, in same order as column names 
+#'                       in matrix or sample.labels; if given, nodes will be colored
+#'                       according to conditions; Default: NULL
 #' @param width          plot width (see plot docs)
 #' @param height         plot height (see plot docs)
 #' @param lwd            line width
@@ -643,18 +661,54 @@ bic.plot.alignment.summary <- function(dat,position="stack",pct=FALSE,col.pal="S
 #' @param xlab           label of x axis
 #' @param ylab           label of y axis
 #' @export
-bic.pdf.hclust<-function(dat,file.name="tmp.pdf",title="",width=26,height=16,lwd=3,
-    cex.main=3,cex.lab=3,cex=3,xlab="",ylab="",sample.labels=NULL)
+bic.pdf.hclust<-function(dat,conds=NULL,file.name=NULL,title="",width=20,height=14,lwd=3,
+    cex.main=2.5,cex.lab=3.0,cex=3.0,xlab="",ylab="",sample.labels=NULL)
 {
-  if(is.null(sample.labels)){
-    sample.labels=colnames(dat)
-  }
-  pdf(file.name,width=width,height=height)
-  plot(hclust(dist(t(dat))), lwd=lwd, main=paste(title), cex.main=cex.main,
-        xlab=xlab,ylab=ylab, cex.lab=cex.lab, cex=cex, labels=sample.labels)
-  dev.off()
-}
 
+  if(!is.null(sample.labels)){
+    colnames(dat) <- sample.labels
+  }
+
+  h <- hclust(dist(t(dat)))
+  dend <- as.dendrogram(h)
+
+  lab.cex = 2.0
+  max.name = 1
+  ## get longest column name in order to ensure margins are correct
+  for(n in colnames(dat)){
+    if (nchar(n) > max.name){
+      max.name <- nchar(n)
+    }
+  }
+  ## adjust label size if number of samples is > 20
+  if(ncol(dat)> 20){
+    lab.cex <- 30/ncol(dat)
+  }
+
+  dend <- dendextend::set(dend,"labels_cex",lab.cex)
+
+  ## if conditions are given, color points on leaves accordingly
+  if(!is.null(conds)){
+    names(conds) <- colnames(dat)
+    conds <- conds[labels(dend)]
+    pch <- c(19)
+    col=as.numeric(as.factor(conds))
+    dend <- dendextend::set(dend,"leaves_pch",pch)
+    dend <- dendextend::set(dend,"leaves_col",col)
+    dend <- dendextend::set(dend,"leaves_cex",lab.cex)
+  }
+
+  if(!is.null(file.name)){
+    pdf(file.name,width=width,height=height)
+  }
+  rmar <- max.name*(lab.cex/2)
+  par(oma=c(3,2,3,1))
+  par(mar=c(3,2,2,rmar))
+  plot(dend, horiz=T,lwd=lwd, main=title, cex.main=cex.main,xlab=xlab,ylab=ylab, cex.lab=lab.cex, cex=cex)
+  if(!is.null(file.name)){
+    dev.off()
+  }
+}
 
 #' Plot heirachical clustering of all samples
 #'
@@ -664,13 +718,17 @@ bic.pdf.hclust<-function(dat,file.name="tmp.pdf",title="",width=26,height=16,lwd
 #'                     a column represents a sample and a row represents
 #'                     a gene. may or may not contain "GeneID" and "GeneSymbol"
 #'                     columns.
+#' @param conds        vector of sample conditions, in same order as column names 
+#'                     in matrix or sample.labels; if given, nodes will be colored
+#'                     according to conditions; Default: NULL
 #' @param log2         logical indicating whether data is on log2 scale (Default: FALSE)
 #' @param file.name    plot will be saved in this file; Default: 
 #'                     $PWD/counts_scaled_hclust.pdf
+#' @param title        main title of plot
 #' @export
-bic.hclust.samples <- function(norm.counts,log2=FALSE,file.name=NULL){
+bic.hclust.samples <- function(norm.counts,conds=NULL,log2=FALSE,file.name=NULL,title=""){
 
-  if("GeneID" %in% colnames(norm.counts) | 
+  if("GeneID" %in% colnames(norm.counts) |
      "GeneSymbol" %in% colnames(norm.counts)){
     norm.counts <- norm.counts[,-grep("GeneID|GeneSymbol",colnames(norm.counts))]
   }
@@ -684,24 +742,24 @@ bic.hclust.samples <- function(norm.counts,log2=FALSE,file.name=NULL){
   if(is.null(file.name)){
     file.name <- "counts_scaled_hclust.pdf"
   }
-  
+
   if(log2==FALSE){
     pseudo <- min(norm.counts[norm.counts > 0])
     counts2hclust <- log2(norm.counts + pseudo)
   } else {
     counts2hclust <- norm.counts
   }
-  sink("/dev/null")
   tryCatch({
-      bic.pdf.hclust(counts2hclust,file.name=file.name,title="All counts scaled using DESeq method")
-     }, error = function() {
-        cat("Error writing pdf file.")
-     }, finally = {
-       sink()
+      bic.pdf.hclust(counts2hclust,conds=conds,file.name=file.name,title=title)
+     }, error = function(err) {
+        stop(err)
+        traceback()
+     }, warning= function(war){
+        warn(war)
      }
-  )
-
+   )
 }
+
 
 #' Plot MDS clustering of all samples
 #'
@@ -820,10 +878,6 @@ bic.standard.heatmap <- function(norm.counts.matrix,condA,condB,genes=NULL,file=
     htmp.dat <- htmp.dat[1:100,]
   }
 
-  #if(is.null(out.file)){
-  #  out.file <- paste("ResDESeq_",condA,"_vs_",condB,"_heatmap.pdf",sep="")
-  #}
- 
   if(dim(htmp.dat)[1]>1 && dim(htmp.dat)[2]>1){
     ## make heatmap pdf
     if(!is.null(file)){

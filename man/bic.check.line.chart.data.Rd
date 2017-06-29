@@ -6,6 +6,11 @@
 \usage{
 bic.check.line.chart.data(dat, dat2 = NULL)
 }
+\arguments{
+\item{dat}{data frame passed to plot function}
+
+\item{dat2}{second data frame passed to plot function (optional)}
+}
 \description{
 Ensure object(s) passed to 'dat' and/or 'dat2' arguments of bic.plot.rseqc.line.chart()
 are data frames where column one contains integers in order from least to greatest,
