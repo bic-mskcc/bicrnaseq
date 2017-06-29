@@ -5,7 +5,7 @@
 \title{Plot distibution of alignment across different genomic locations}
 \usage{
 bic.plot.alignment.distribution(dat, pct = FALSE, col.pal = "Set3",
-  file = NULL)
+  horizontal = TRUE, file = NULL)
 }
 \arguments{
 \item{dat}{data frame consisting of data from CollectRNASeqMetrics
@@ -15,6 +15,8 @@ output}
 
 \item{col.pal}{name of color palette; must be from list of RColorBrewer palettes
 Default: "Set3"}
+
+\item{horizontal}{logical indicating that bars should be horizontal; Default: TRUE}
 
 \item{file}{PDF file to which plot should be saved (optional)}
 }

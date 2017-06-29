@@ -4,7 +4,8 @@
 \alias{bic.plot.5prime3prime.bias}
 \title{Plot coverage uniformity (5' and 3' bias)}
 \usage{
-bic.plot.5prime3prime.bias(dat, col.pal = "Set3", file = NULL)
+bic.plot.5prime3prime.bias(dat, col.pal = "Set3", horizontal = TRUE,
+  file = NULL)
 }
 \arguments{
 \item{dat}{data frame consisting of data from CollectRNASeqMetrics
@@ -12,6 +13,8 @@ output}
 
 \item{col.pal}{name of color palette; must be from list of RColorBrewer palettes
 Default: "Set3"}
+
+\item{horizontal}{logical indicating that bars should be horizontal; Default: TRUE}
 
 \item{file}{PDF file to which plot should be saved (optional)}
 }

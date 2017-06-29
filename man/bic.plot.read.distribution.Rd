@@ -5,7 +5,7 @@
 \title{Plot RSeQC read distribution stats}
 \usage{
 bic.plot.read.distribution(dat, file = NULL, stack = TRUE, pct = FALSE,
-  col.pal = "Set3")
+  col.pal = "Set3", horizontal = TRUE)
 }
 \arguments{
 \item{dat}{data frame containing merged output from multiple runs of
@@ -21,6 +21,8 @@ and may contain any other slots}
 
 \item{col.pal}{name of color palette; must be from list of RColorBrewer palettes
 Default: "Set3"}
+
+\item{horizontal}{logical indicating that bars should be horizontal; Default: TRUE}
 }
 \description{
 Plot distribution of reads across different genomic features
