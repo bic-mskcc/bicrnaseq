@@ -60,6 +60,9 @@ bic.grid.arrange.shared.legend <- function(..., ncol = length(list(...)), nrow =
 #' Ensure object(s) passed to 'dat' and/or 'dat2' arguments of bic.plot.rseqc.line.chart()
 #' are data frames where column one contains integers in order from least to greatest,
 #' and each remaining column contains metric values for one sample
+#' 
+#' @param  dat   data frame passed to plot function
+#' @param  dat2  second data frame passed to plot function (optional)
 bic.check.line.chart.data <- function(dat,dat2=NULL){
   if(is.unsorted(dat[,1],strictly=TRUE)){
     stop("first data set must be sorted by first column")
@@ -118,7 +121,7 @@ bic.plot.rseqc.line.chart <- function(dat,title,dat2=NULL,title2=NULL,main=NULL,
   p2 <- NULL
 
   ## validate input 
-  bic.check.rseqc.line.chart.data(dat,dat2=dat2)
+  bic.check.line.chart.data(dat,dat2=dat2)
 
   dat.m <- melt(dat,id.vars=colnames(dat)[1])
   p <- ggplot(dat.m,
@@ -166,6 +169,8 @@ bic.plot.rseqc.line.chart <- function(dat,title,dat2=NULL,title2=NULL,main=NULL,
 #' Ensure object(s) passed to 'dat' argument of bic.plot.read.distribution()
 #' is a data frame containing a 'Samples' slot and at least one other slot
 #' containing data to plot
+#' 
+#' @param  dat  data frame passed to plot function 
 bic.check.read.distribution.data <- function(dat){
   if(!"Samples" %in% colnames(dat)){
     stop("data set must contain a 'Samples' column")
@@ -181,17 +186,18 @@ bic.check.read.distribution.data <- function(dat){
 #' Plot distribution of reads across different genomic features
 #' like exons, introns, TSS, etc. for all samples in a project
 #' 
-#' @param dat      data frame containing merged output from multiple runs of
-#'                 RSeQC's read_distribution.py script, where rows are
-#'                 samples and columns are metrics; must contain "Samples" slot
-#'                 and may contain any other slots 
-#' @param pct      logical indicating that plot should show percentages
-#' @param stack    logical indicating that bar chart should be stacked; Default: TRUE
-#' @param col.pal  name of color palette; must be from list of RColorBrewer palettes
-#'                 Default: "Set3"
-#' @param file     PDF file to which plot should be saved (optional)
+#' @param dat        data frame containing merged output from multiple runs of
+#'                   RSeQC's read_distribution.py script, where rows are
+#'                   samples and columns are metrics; must contain "Samples" slot
+#'                   and may contain any other slots 
+#' @param pct        logical indicating that plot should show percentages
+#' @param stack      logical indicating that bar chart should be stacked; Default: TRUE
+#' @param horizontal logical indicating that bars should be horizontal; Default: TRUE
+#' @param col.pal    name of color palette; must be from list of RColorBrewer palettes
+#'                   Default: "Set3"
+#' @param file       PDF file to which plot should be saved (optional)
 #' @export
-bic.plot.read.distribution <- function(dat,file=NULL,stack=TRUE,pct=FALSE,col.pal="Set3"){
+bic.plot.read.distribution <- function(dat,file=NULL,stack=TRUE,pct=FALSE,col.pal="Set3",horizontal=TRUE){
 
   ## validate input
   bic.check.read.distribution.data(dat)
@@ -215,11 +221,14 @@ bic.plot.read.distribution <- function(dat,file=NULL,stack=TRUE,pct=FALSE,col.pa
     labs(title="RSeQC Read Distribution") +
     scale_fill_brewer(direction=1,palette=col.pal) +
     xlab("") +
-    ylab("")
-
+    ylab("") 
+  if(horizontal){
+    p <- p + coord_flip()
+  }
   if(pct){
     p <- p + scale_y_continuous(labels=percent)
   }
+
 
   if(!is.null(file)){
     pdf(file)
@@ -341,7 +350,7 @@ bic.deseq.plot.pca <- function(cds,file=NULL){
   if(!is.null(file)){
     pdf(file)
   }
-  plotPCA(vst,intgroup="condition")
+  DESeq::plotPCA(vst,intgroup="condition")
   if(!is.null(file)){
     dev.off()
   }
@@ -386,20 +395,22 @@ bic.pval.histogram <- function(dat,file=NULL){
   }
 }
 
-#' Validate alignment distribution data from CollectRnaSeqMetrics
+#' Validate data from PICARD CollectRnaSeqMetrics or AlignmentSummaryMetrics
 #'
 #' Check that data frame contains the correct column names and that
 #' all data is numeric
 #'
 #' @param dat    data frame passed to plot function
 #' @param name   name of plot (Options: ["alignment.distribution" |
-#'                                       "5prime3prime.bias"]
-bic.check.collectrnaseqmetrics.data <- function(dat,name){
+#'                                       "5prime3prime.bias" |
+#'                                       "alignment.summary"]
+bic.check.picard.data <- function(dat,name){
   required.slots <- switch(name,
                            "alignment.distribution" = c("SAMPLE","RIBOSOMAL_BASES","CODING_BASES",
                                                       "UTR_BASES","INTRONIC_BASES","INTERGENIC_BASES"),
                            "5prime3prime.bias" = c("SAMPLE","MEDIAN_CV_COVERAGE","MEDIAN_5PRIME_BIAS",
-                                                 "MEDIAN_3PRIME_BIAS","MEDIAN_5PRIME_TO_3PRIME_BIAS")
+                                                 "MEDIAN_3PRIME_BIAS","MEDIAN_5PRIME_TO_3PRIME_BIAS"),
+                           "alignment.summary" = c("SAMPLE","CATEGORY","PF_READS","PF_READS_ALIGNED")
                           )
   missing.slots = c()
   for(rs in required.slots){
@@ -408,12 +419,12 @@ bic.check.collectrnaseqmetrics.data <- function(dat,name){
     }
   }
   if(length(missing.slots) > 0){
-    stop(paste("alignment distribution data is missing the following columns: ",
+    stop(paste("data is missing the following required column(s): ",
                paste(missing.slots,collapse=", "),
                sep="")
         )
   }
-  tryCatch({apply(dat[,required.slots[-which(required.slots=="SAMPLE")]],1,as.numeric)},
+  tryCatch({apply(dat[,required.slots[-grep("SAMPLE|CATEGORY",required.slots)]],1,as.numeric)},
     warning = function(w){
       stop("data set contains non-numeric values")
     },
@@ -421,6 +432,11 @@ bic.check.collectrnaseqmetrics.data <- function(dat,name){
       stop("data set contains non-numeric values")
     }
   )
+  if(name=="alignment.summary"){
+    if(!"FIRST_OF_PAIR" %in% dat$CATEGORY | !"SECOND_OF_PAIR" %in% dat$CATEGORY){
+      stop("'CATEGORY' column must contain at least one instance of 'FIRST_OF_PAIR' and one of 'SECOND_OF_PAIR'")
+    }
+  }
   invisible(NULL)
 }
 
@@ -436,12 +452,13 @@ bic.check.collectrnaseqmetrics.data <- function(dat,name){
 #' @param col.pal  name of color palette; must be from list of RColorBrewer palettes
 #'                 Default: "Set3"
 #' @param file     PDF file to which plot should be saved (optional)
+#' @param horizontal logical indicating that bars should be horizontal; Default: TRUE
 #' @param pct      plot percentages
 #'
 #' @export
-bic.plot.alignment.distribution <- function(dat,pct=FALSE,col.pal="Set3",file=NULL){
+bic.plot.alignment.distribution <- function(dat,pct=FALSE,col.pal="Set3",horizontal=TRUE,file=NULL){
   ## validate data
-  bic.check.collectrnaseqmetrics.data(dat,"alignment.distribution")
+  bic.check.picard.data(dat,"alignment.distribution")
   y <- data.frame(Sample = dat$SAMPLE, 
                  Ribosomal = dat$RIBOSOMAL_BASES, 
                  Coding = dat$CODING_BASES,
@@ -469,6 +486,9 @@ bic.plot.alignment.distribution <- function(dat,pct=FALSE,col.pal="Set3",file=NU
     labs(title="Alignment Distribution") + 
     xlab("") +  
     ylab(y.lbl)
+    if(horizontal){
+      p <- p + coord_flip()
+    }
     if(pct){
       p <- p + scale_y_continuous(labels=percent)
     } 
@@ -490,12 +510,13 @@ bic.plot.alignment.distribution <- function(dat,pct=FALSE,col.pal="Set3",file=NU
 #'                 output
 #' @param col.pal  name of color palette; must be from list of RColorBrewer palettes
 #'                 Default: "Set3"
+#' @param horizontal logical indicating that bars should be horizontal; Default: TRUE
 #' @param file     PDF file to which plot should be saved (optional)
 #'
 #' @export
-bic.plot.5prime3prime.bias <- function(dat,col.pal="Set3",file=NULL){
+bic.plot.5prime3prime.bias <- function(dat,col.pal="Set3",horizontal=TRUE,file=NULL){
   ## validate data
-  bic.check.collectrnaseqmetrics.data(dat,"5prime3prime.bias")
+  bic.check.picard.data(dat,"5prime3prime.bias")
   y <- data.frame(Sample = dat$SAMPLE,
                   cvCoverage = dat$MEDIAN_CV_COVERAGE,
                   fivePrimeBias = dat$MEDIAN_5PRIME_BIAS,
@@ -516,7 +537,9 @@ bic.plot.5prime3prime.bias <- function(dat,col.pal="Set3",file=NULL){
     labs(title="Coverage Uniformity") + 
     xlab("") + 
     ylab("")
-
+  if(horizontal){
+    p <- p + coord_flip()
+  }
   if(!is.null(file)){
     pdf(file)
   }
@@ -583,6 +606,9 @@ bic.plot.coverage <- function(dat,col.pal="Set3",file=NULL){
 #'
 #' @export
 bic.plot.alignment.summary <- function(dat,position="stack",pct=FALSE,col.pal="Set3",file=NULL){
+  ## validate input data
+  bic.check.picard.data(dat,"alignment.summary")
+
   dat <- dat[-which(dat$CATEGORY=="PAIR"),]
   dat$UNMAPPED <- dat$PF_READS-dat$PF_READS_ALIGNED
   dat <- dat[,c("CATEGORY","PF_READS","UNMAPPED","SAMPLE")]

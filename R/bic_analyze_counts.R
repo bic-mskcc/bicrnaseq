@@ -678,7 +678,7 @@ bic.run.gsa <- function(species,deseq.res,min.gns=5,max.gns=1000,
 
     gsa.res <- runGSA(fc,geneSetStat="mean",gsc=gsc,
                      gsSizeLim=c(min.gns,max.gns),nPerm=nPerm,directions=fc)
-    save(gsa.res,file="GSA_RESULTS.Rdata",compress=T)
+    #save(gsa.res,file="GSA_RESULTS.Rdata",compress=T)
     tab.res <- bic.process.gsa.res(gsa.res,max.p=max.p,
                                    fc2keep=fc2keep,frac2keep=frac2keep,fcQ=fcQ)
     if(!is.null(tab.res$gsa.tab.up)){
