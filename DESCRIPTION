@@ -1,6 +1,6 @@
 Package: bicrnaseq
 Title: MSKCC Bioinformatics Core RNASeq
-Version: 0.0.0.9000
+Version: 0.0.1
 Authors@R: person("Caitlin", "Jones", email = "byrne@cbio.mskcc.org", role = c("aut", "cre"))
 Author: Caitlin Jones [aut, cre]
 Maintainer: Caitlin Jones <byrne@cbio.mskcc.org>
