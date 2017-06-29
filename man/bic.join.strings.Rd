@@ -4,12 +4,12 @@
 \alias{bic.join.strings}
 \title{Convert a character vector to a delimited string}
 \usage{
-bic.join.strings(x, str)
+bic.join.strings(x, delim)
 }
 \arguments{
 \item{x}{character vector}
 
-\item{delimeter}{delimiter to join vector elements}
+\item{delim}{delimiter to join vector elements}
 }
 \value{
 a string

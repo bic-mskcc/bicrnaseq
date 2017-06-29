@@ -4,14 +4,18 @@
 \alias{bic.pdf.hclust}
 \title{Write PDF file containing heierarchical clustering tree}
 \usage{
-bic.pdf.hclust(dat, file.name = "tmp.pdf", title = "", width = 26,
-  height = 16, lwd = 3, cex.main = 3, cex.lab = 3, cex = 3,
-  xlab = "", ylab = "", sample.labels = NULL)
+bic.pdf.hclust(dat, conds = NULL, file.name = NULL, title = "",
+  width = 20, height = 14, lwd = 3, cex.main = 2.5, cex.lab = 3,
+  cex = 3, xlab = "", ylab = "", sample.labels = NULL)
 }
 \arguments{
 \item{dat}{matrix containing data to plot}
 
-\item{file.name}{file name. Default: "tmp.pdf"}
+\item{conds}{vector of sample conditions, in same order as column names 
+in matrix or sample.labels; if given, nodes will be colored
+according to conditions; Default: NULL}
+
+\item{file.name}{PDF file to which plot should be saved; Default: NULL}
 
 \item{title}{Title of plot}
 
@@ -31,7 +35,7 @@ bic.pdf.hclust(dat, file.name = "tmp.pdf", title = "", width = 26,
 
 \item{ylab}{label of y axis}
 
-\item{sample.labels}{Vector of sample labels. Default: column names in matrix}
+\item{sample.labels}{Vector of sample labels; Default: column names in matrix}
 }
 \description{
 Quickly plot heirarchical clustering of data with several default

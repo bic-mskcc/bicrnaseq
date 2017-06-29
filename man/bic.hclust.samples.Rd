@@ -4,7 +4,8 @@
 \alias{bic.hclust.samples}
 \title{Plot heirachical clustering of all samples}
 \usage{
-bic.hclust.samples(norm.counts, log2 = FALSE, file.name = NULL)
+bic.hclust.samples(norm.counts, conds = NULL, log2 = FALSE,
+  file.name = NULL, title = "")
 }
 \arguments{
 \item{norm.counts}{data matrix containing normalized counts, where
@@ -12,10 +13,16 @@ a column represents a sample and a row represents
 a gene. may or may not contain "GeneID" and "GeneSymbol"
 columns.}
 
+\item{conds}{vector of sample conditions, in same order as column names 
+in matrix or sample.labels; if given, nodes will be colored
+according to conditions; Default: NULL}
+
 \item{log2}{logical indicating whether data is on log2 scale (Default: FALSE)}
 
 \item{file.name}{plot will be saved in this file; Default: 
 $PWD/counts_scaled_hclust.pdf}
+
+\item{title}{main title of plot}
 }
 \description{
 Plot clustering of samples using the heierarchical clustering method
