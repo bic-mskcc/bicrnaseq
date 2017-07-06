@@ -4,8 +4,8 @@
 \alias{bic.plot.read.distribution}
 \title{Plot RSeQC read distribution stats}
 \usage{
-bic.plot.read.distribution(dat, file = NULL, stack = TRUE, pct = FALSE,
-  col.pal = "Set3", horizontal = TRUE)
+bic.plot.read.distribution(dat, file = NULL, stack = TRUE,
+  horizontal = TRUE, pct = FALSE, col.pal = "Set3")
 }
 \arguments{
 \item{dat}{data frame containing merged output from multiple runs of
@@ -16,6 +16,8 @@ and may contain any other slots}
 \item{file}{PDF file to which plot should be saved (optional)}
 
 \item{stack}{logical indicating that bar chart should be stacked; Default: TRUE}
+
+\item{horizontal}{logical indicating that bars should be horizontal; Default: TRUE}
 
 \item{pct}{logical indicating that plot should show percentages}
 
