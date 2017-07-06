@@ -96,14 +96,14 @@ bic.check.line.chart.data <- function(dat,dat2=NULL){
   invisible(NULL)
 } 
 
-#' Plot RSeQC line metrics 
+#' Plot RSeQC sequential metrics in a line graph 
 #'
-#' Create a line chart for merged RSeQC metrics where the x axis is 
-#' a numerical value and the y axis is a count
+#' Create a line chart for merged RSeQC metrics where each line represents
+#' a sample with the x axis showing sequential numeric value (e.g., read
+#' read position or GC content value) and the y axis is a count
 #' 
-#' @param dat         data frame where column1 contains read position for either 
-#'                    read 1 or read 2, and the remaining columns are metric values
-#'                    for each sample; position column name must be "Position"
+#' @param dat         data frame where column1 contains sequential numeric values 
+#'                    and the remaining columns are metric values for each sample
 #' @param title       plot title
 #' @param dat2        second data frame with the same structure as dat1, to be plotted
 #'                    adjacent to the plot of dat (optional; used to plot data for read 
@@ -190,13 +190,14 @@ bic.check.read.distribution.data <- function(dat){
 #'                 RSeQC's read_distribution.py script, where rows are
 #'                 samples and columns are metrics; must contain "Samples" slot
 #'                 and may contain any other slots 
+#' @param horizontal logical indicating that bars should be horizontal; Default: TRUE
 #' @param pct      logical indicating that plot should show percentages
 #' @param stack    logical indicating that bar chart should be stacked; Default: TRUE
 #' @param col.pal  name of color palette; must be from list of RColorBrewer palettes
 #'                 Default: "Set3"
 #' @param file     PDF file to which plot should be saved (optional)
 #' @export
-bic.plot.read.distribution <- function(dat,file=NULL,stack=TRUE,pct=FALSE,col.pal="Set3"){
+bic.plot.read.distribution <- function(dat,file=NULL,stack=TRUE,horizontal=TRUE,pct=FALSE,col.pal="Set3"){
 
   ## validate input
   bic.check.read.distribution.data(dat)
@@ -224,6 +225,9 @@ bic.plot.read.distribution <- function(dat,file=NULL,stack=TRUE,pct=FALSE,col.pa
 
   if(pct){
     p <- p + scale_y_continuous(labels=percent)
+  }
+  if(horizontal){
+    p <- p + coord_flip()
   }
 
   if(!is.null(file)){
@@ -346,7 +350,7 @@ bic.deseq.plot.pca <- function(cds,file=NULL){
   if(!is.null(file)){
     pdf(file)
   }
-  plotPCA(vst,intgroup="condition")
+  DESeq::plotPCA(vst,intgroup="condition")
   if(!is.null(file)){
     dev.off()
   }
@@ -429,8 +433,8 @@ bic.check.picard.data <- function(dat,name){
     }
   )
   if(name=="alignment.summary"){
-    if(!"FIRST_IN_PAIR" %in% dat$CATEGORY | !"SECOND_IN_PAIR" %in% dat$CATEGORY){
-      stop("'CATEGORY' column must contain at least one instance of 'FIRST_IN_PAIR' and one of 'SECOND_IN_PAIR'")
+    if(!"FIRST_OF_PAIR" %in% dat$CATEGORY | !"SECOND_OF_PAIR" %in% dat$CATEGORY){
+      stop("'CATEGORY' column must contain at least one instance of 'FIRST_OF_PAIR' and one of 'SECOND_OF_PAIR'")
     }
   }
   invisible(NULL)
@@ -443,15 +447,16 @@ bic.check.picard.data <- function(dat,name){
 #' alignments across ribosomal, coding, UTR, intronic and 
 #' intergenic bases
 #' 
-#' @param dat      data frame consisting of data from CollectRNASeqMetrics
-#'                 output
-#' @param col.pal  name of color palette; must be from list of RColorBrewer palettes
-#'                 Default: "Set3"
-#' @param file     PDF file to which plot should be saved (optional)
-#' @param pct      plot percentages
+#' @param dat        data frame consisting of data from CollectRNASeqMetrics
+#'                   output
+#' @param col.pal    name of color palette; must be from list of RColorBrewer palettes
+#'                   Default: "Set3"
+#' @param file       PDF file to which plot should be saved (optional)
+#' @param horizontal logical indicating that bars should be horizontal; Default: TRUE
+#' @param pct        plot percentages
 #'
 #' @export
-bic.plot.alignment.distribution <- function(dat,pct=FALSE,col.pal="Set3",file=NULL){
+bic.plot.alignment.distribution <- function(dat,pct=FALSE,horizontal=TRUE,col.pal="Set3",file=NULL){
   ## validate data
   bic.check.picard.data(dat,"alignment.distribution")
   y <- data.frame(Sample = dat$SAMPLE, 
@@ -484,6 +489,9 @@ bic.plot.alignment.distribution <- function(dat,pct=FALSE,col.pal="Set3",file=NU
     if(pct){
       p <- p + scale_y_continuous(labels=percent)
     } 
+  if(horizontal){
+    p <- p + coord_flip()
+  }
   if(!is.null(file)){
     pdf(file)
   }
@@ -502,10 +510,11 @@ bic.plot.alignment.distribution <- function(dat,pct=FALSE,col.pal="Set3",file=NU
 #'                 output
 #' @param col.pal  name of color palette; must be from list of RColorBrewer palettes
 #'                 Default: "Set3"
+#' @param horizontal logical indicating that bars should be horizontal; Default: TRUE
 #' @param file     PDF file to which plot should be saved (optional)
 #'
 #' @export
-bic.plot.5prime3prime.bias <- function(dat,col.pal="Set3",file=NULL){
+bic.plot.5prime3prime.bias <- function(dat,horizontal=TRUE,col.pal="Set3",file=NULL){
   ## validate data
   bic.check.picard.data(dat,"5prime3prime.bias")
   y <- data.frame(Sample = dat$SAMPLE,
@@ -529,6 +538,10 @@ bic.plot.5prime3prime.bias <- function(dat,col.pal="Set3",file=NULL){
     xlab("") + 
     ylab("")
 
+
+  if(horizontal){
+    p <- p + coord_flip()
+  }
   if(!is.null(file)){
     pdf(file)
   }

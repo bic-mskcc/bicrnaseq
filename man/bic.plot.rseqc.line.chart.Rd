@@ -2,15 +2,14 @@
 % Please edit documentation in R/bic_plots.R
 \name{bic.plot.rseqc.line.chart}
 \alias{bic.plot.rseqc.line.chart}
-\title{Plot RSeQC line metrics}
+\title{Plot RSeQC sequential metrics in a line graph}
 \usage{
 bic.plot.rseqc.line.chart(dat, title, dat2 = NULL, title2 = NULL,
   main = NULL, col.pal = "Set3", file = NULL)
 }
 \arguments{
-\item{dat}{data frame where column1 contains read position for either 
-read 1 or read 2, and the remaining columns are metric values
-for each sample; position column name must be "Position"}
+\item{dat}{data frame where column1 contains sequential numeric values 
+and the remaining columns are metric values for each sample}
 
 \item{title}{plot title}
 
@@ -27,6 +26,7 @@ adjacent to the plot of dat (optional; used to plot data for read
 \item{file}{PDF file to which plot should be saved (optional)}
 }
 \description{
-Create a line chart for merged RSeQC metrics where the x axis is 
-a numerical value and the y axis is a count
+Create a line chart for merged RSeQC metrics where each line represents
+a sample with the x axis showing sequential numeric value (e.g., read
+read position or GC content value) and the y axis is a count
 }
