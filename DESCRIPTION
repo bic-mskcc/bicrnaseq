@@ -1,7 +1,6 @@
 Package: bicrnaseq
 Title: MSKCC Bioinformatics Core RNASeq
 Version: 0.0.1
-Authors@R: person("Caitlin", "Jones", email = "byrne@cbio.mskcc.org", role = c("aut", "cre"))
 Author: Caitlin Jones [aut, cre]
 Maintainer: Caitlin Jones <byrne@cbio.mskcc.org>
 Description: All things RNASeq, as implemented by the Bioinformatics Core. Includes
@@ -33,4 +32,5 @@ RoxygenNote: 6.0.1
 Suggests: testthat,
     knitr,
     rmarkdown
+
 VignetteBuilder: knitr

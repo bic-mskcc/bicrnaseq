@@ -6,12 +6,13 @@
 \usage{
 bic.plot.alignment.distribution(dat, pct = FALSE, col.pal = "Set3",
   horizontal = TRUE, file = NULL)
-}
 \arguments{
 \item{dat}{data frame consisting of data from CollectRNASeqMetrics
 output}
 
 \item{pct}{plot percentages}
+
+\item{horizontal}{logical indicating that bars should be horizontal; Default: TRUE}
 
 \item{col.pal}{name of color palette; must be from list of RColorBrewer palettes
 Default: "Set3"}
