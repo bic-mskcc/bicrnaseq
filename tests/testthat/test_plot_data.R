@@ -2,7 +2,7 @@ library("testthat")
 
 context("Validation of plot function input data")
 
-test_that("line chart data error handling", {
+test_that("Errors from line chart data are handled properly", {
 
   ## two correct data frames
   c1 <- rep(1:3)
@@ -47,7 +47,7 @@ test_that("line chart data error handling", {
 })
 
 
-test_that("read distribution data error handling",{
+test_that("errors from read distribution data are handled properly",{
   dat <- c1 <- rep(1:3)
   dat <- data.frame(c1,c1,c1,c1)
   expect_error(bic.check.read.distribution.data(dat),
@@ -58,7 +58,7 @@ test_that("read distribution data error handling",{
 })
 
 
-test_that("PICARD metrics error handling",{
+test_that("errors from PICARD metrics data frames are handled properly",{
   ad <- data.frame("SAMPLE"=c("s1","s2","s3"),
                  "RIBOSOMAL_BASES"=rep(1:3),
                  "CODING_BASES"=rep(1:3),
@@ -72,7 +72,7 @@ test_that("PICARD metrics error handling",{
                      "MEDIAN_3PRIME_BIAS"=rep(1:3),
                      "MEDIAN_5PRIME_TO_3PRIME_BIAS"=rep(1:3)
                     )
-  as <- data.frame("CATEGORY"=c("SECOND_IN_PAIR","hello","FIRST_IN_PAIR"),
+  as <- data.frame("CATEGORY"=c("SECOND_OF_PAIR","hello","FIRST_OF_PAIR"),
                    "SAMPLE"=c("s1","s2","s3"),
                    "PF_READS"=c(1,2,3),
                    "PF_READS_ALIGNED"=c(4,5,6))
@@ -93,12 +93,9 @@ test_that("PICARD metrics error handling",{
                regexp = "data set contains non-numeric values")
 
   ## data is missing required columns
-  dat3 = bias[,-c(3,5)] 
-  expect_error(bic.check.picard.data(dat3,"5prime3prime.bias"),
-               paste("data is missing the following required column(s): ",
-                      paste(colnames(bias)[c(3,5)],sep="",collapse=", "),
-                      sep="")
-              )
+  dat3 = bias[,-c(3,6)] 
+  expect_error(bic.check.picard.data(dat3,"alignment.distribution"),
+               "alignment distribution data is missing the following columns: CODING_BASES, INTERGENIC_BASES")       
 
   ## alignment summary data is missing required column value under "CATEGORY"
   dat4 <- as[-1,]

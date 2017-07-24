@@ -186,18 +186,18 @@ bic.check.read.distribution.data <- function(dat){
 #' Plot distribution of reads across different genomic features
 #' like exons, introns, TSS, etc. for all samples in a project
 #' 
-#' @param dat      data frame containing merged output from multiple runs of
-#'                 RSeQC's read_distribution.py script, where rows are
-#'                 samples and columns are metrics; must contain "Samples" slot
-#'                 and may contain any other slots 
+#' @param dat        data frame containing merged output from multiple runs of
+#'                   RSeQC's read_distribution.py script, where rows are
+#'                   samples and columns are metrics; must contain "Samples" slot
+#'                   and may contain any other slots 
+#' @param pct        logical indicating that plot should show percentages
+#' @param stack      logical indicating that bar chart should be stacked; Default: TRUE
 #' @param horizontal logical indicating that bars should be horizontal; Default: TRUE
-#' @param pct      logical indicating that plot should show percentages
-#' @param stack    logical indicating that bar chart should be stacked; Default: TRUE
-#' @param col.pal  name of color palette; must be from list of RColorBrewer palettes
-#'                 Default: "Set3"
-#' @param file     PDF file to which plot should be saved (optional)
+#' @param col.pal    name of color palette; must be from list of RColorBrewer palettes
+#'                   Default: "Set3"
+#' @param file       PDF file to which plot should be saved (optional)
 #' @export
-bic.plot.read.distribution <- function(dat,file=NULL,stack=TRUE,horizontal=TRUE,pct=FALSE,col.pal="Set3"){
+bic.plot.read.distribution <- function(dat,file=NULL,stack=TRUE,pct=FALSE,col.pal="Set3",horizontal=TRUE){
 
   ## validate input
   bic.check.read.distribution.data(dat)
@@ -221,14 +221,17 @@ bic.plot.read.distribution <- function(dat,file=NULL,stack=TRUE,horizontal=TRUE,
     labs(title="RSeQC Read Distribution") +
     scale_fill_brewer(direction=1,palette=col.pal) +
     xlab("") +
-    ylab("")
-
+    ylab("") 
+  if(horizontal){
+    p <- p + coord_flip()
+  }
   if(pct){
     p <- p + scale_y_continuous(labels=percent)
   }
   if(horizontal){
     p <- p + coord_flip()
   }
+
 
   if(!is.null(file)){
     pdf(file)
@@ -486,6 +489,9 @@ bic.plot.alignment.distribution <- function(dat,pct=FALSE,horizontal=TRUE,col.pa
     labs(title="Alignment Distribution") + 
     xlab("") +  
     ylab(y.lbl)
+    if(horizontal){
+      p <- p + coord_flip()
+    }
     if(pct){
       p <- p + scale_y_continuous(labels=percent)
     } 
@@ -514,7 +520,7 @@ bic.plot.alignment.distribution <- function(dat,pct=FALSE,horizontal=TRUE,col.pa
 #' @param file     PDF file to which plot should be saved (optional)
 #'
 #' @export
-bic.plot.5prime3prime.bias <- function(dat,horizontal=TRUE,col.pal="Set3",file=NULL){
+bic.plot.5prime3prime.bias <- function(dat,col.pal="Set3",horizontal=TRUE,file=NULL){
   ## validate data
   bic.check.picard.data(dat,"5prime3prime.bias")
   y <- data.frame(Sample = dat$SAMPLE,
@@ -537,8 +543,7 @@ bic.plot.5prime3prime.bias <- function(dat,horizontal=TRUE,col.pal="Set3",file=N
     labs(title="Coverage Uniformity") + 
     xlab("") + 
     ylab("")
-
-
+  
   if(horizontal){
     p <- p + coord_flip()
   }
@@ -659,12 +664,9 @@ bic.plot.alignment.summary <- function(dat,position="stack",pct=FALSE,col.pal="S
 #' parameters like width, height, font size, etc.
 #' 
 #' @param dat            matrix containing data to plot
-#' @param file.name      PDF file to which plot should be saved; Default: NULL 
+#' @param file.name      file name. Default: "tmp.pdf"
 #' @param title          Title of plot
-#' @param sample.labels  Vector of sample labels; Default: column names in matrix
-#' @param conds          vector of sample conditions, in same order as column names 
-#'                       in matrix or sample.labels; if given, nodes will be colored
-#'                       according to conditions; Default: NULL
+#' @param sample.labels  Vector of sample labels. Default: column names in matrix
 #' @param width          plot width (see plot docs)
 #' @param height         plot height (see plot docs)
 #' @param lwd            line width
@@ -674,54 +676,18 @@ bic.plot.alignment.summary <- function(dat,position="stack",pct=FALSE,col.pal="S
 #' @param xlab           label of x axis
 #' @param ylab           label of y axis
 #' @export
-bic.pdf.hclust<-function(dat,conds=NULL,file.name=NULL,title="",width=20,height=14,lwd=3,
-    cex.main=2.5,cex.lab=3.0,cex=3.0,xlab="",ylab="",sample.labels=NULL)
+bic.pdf.hclust<-function(dat,file.name="tmp.pdf",title="",width=26,height=16,lwd=3,
+    cex.main=3,cex.lab=3,cex=3,xlab="",ylab="",sample.labels=NULL)
 {
-
-  if(!is.null(sample.labels)){
-    colnames(dat) <- sample.labels
+  if(is.null(sample.labels)){
+    sample.labels=colnames(dat)
   }
-
-  h <- hclust(dist(t(dat)))
-  dend <- as.dendrogram(h)
-
-  lab.cex = 2.0
-  max.name = 1
-  ## get longest column name in order to ensure margins are correct
-  for(n in colnames(dat)){
-    if (nchar(n) > max.name){
-      max.name <- nchar(n)
-    }
-  }
-  ## adjust label size if number of samples is > 20
-  if(ncol(dat)> 20){
-    lab.cex <- 30/ncol(dat)
-  }
-
-  dend <- dendextend::set(dend,"labels_cex",lab.cex)
-
-  ## if conditions are given, color points on leaves accordingly
-  if(!is.null(conds)){
-    names(conds) <- colnames(dat)
-    conds <- conds[labels(dend)]
-    pch <- c(19)
-    col=as.numeric(as.factor(conds))
-    dend <- dendextend::set(dend,"leaves_pch",pch)
-    dend <- dendextend::set(dend,"leaves_col",col)
-    dend <- dendextend::set(dend,"leaves_cex",lab.cex)
-  }
-
-  if(!is.null(file.name)){
-    pdf(file.name,width=width,height=height)
-  }
-  rmar <- max.name*(lab.cex/2)
-  par(oma=c(3,2,3,1))
-  par(mar=c(3,2,2,rmar))
-  plot(dend, horiz=T,lwd=lwd, main=title, cex.main=cex.main,xlab=xlab,ylab=ylab, cex.lab=lab.cex, cex=cex)
-  if(!is.null(file.name)){
-    dev.off()
-  }
+  pdf(file.name,width=width,height=height)
+  plot(hclust(dist(t(dat))), lwd=lwd, main=paste(title), cex.main=cex.main,
+        xlab=xlab,ylab=ylab, cex.lab=cex.lab, cex=cex, labels=sample.labels)
+  dev.off()
 }
+
 
 #' Plot heirachical clustering of all samples
 #'
@@ -731,17 +697,13 @@ bic.pdf.hclust<-function(dat,conds=NULL,file.name=NULL,title="",width=20,height=
 #'                     a column represents a sample and a row represents
 #'                     a gene. may or may not contain "GeneID" and "GeneSymbol"
 #'                     columns.
-#' @param conds        vector of sample conditions, in same order as column names 
-#'                     in matrix or sample.labels; if given, nodes will be colored
-#'                     according to conditions; Default: NULL
 #' @param log2         logical indicating whether data is on log2 scale (Default: FALSE)
 #' @param file.name    plot will be saved in this file; Default: 
 #'                     $PWD/counts_scaled_hclust.pdf
-#' @param title        main title of plot
 #' @export
-bic.hclust.samples <- function(norm.counts,conds=NULL,log2=FALSE,file.name=NULL,title=""){
+bic.hclust.samples <- function(norm.counts,log2=FALSE,file.name=NULL){
 
-  if("GeneID" %in% colnames(norm.counts) |
+  if("GeneID" %in% colnames(norm.counts) | 
      "GeneSymbol" %in% colnames(norm.counts)){
     norm.counts <- norm.counts[,-grep("GeneID|GeneSymbol",colnames(norm.counts))]
   }
@@ -755,24 +717,24 @@ bic.hclust.samples <- function(norm.counts,conds=NULL,log2=FALSE,file.name=NULL,
   if(is.null(file.name)){
     file.name <- "counts_scaled_hclust.pdf"
   }
-
+  
   if(log2==FALSE){
     pseudo <- min(norm.counts[norm.counts > 0])
     counts2hclust <- log2(norm.counts + pseudo)
   } else {
     counts2hclust <- norm.counts
   }
+  sink("/dev/null")
   tryCatch({
-      bic.pdf.hclust(counts2hclust,conds=conds,file.name=file.name,title=title)
-     }, error = function(err) {
-        stop(err)
-        traceback()
-     }, warning= function(war){
-        warn(war)
+      bic.pdf.hclust(counts2hclust,file.name=file.name,title="All counts scaled using DESeq method")
+     }, error = function() {
+        cat("Error writing pdf file.")
+     }, finally = {
+       sink()
      }
-   )
-}
+  )
 
+}
 
 #' Plot MDS clustering of all samples
 #'
@@ -891,6 +853,10 @@ bic.standard.heatmap <- function(norm.counts.matrix,condA,condB,genes=NULL,file=
     htmp.dat <- htmp.dat[1:100,]
   }
 
+  #if(is.null(out.file)){
+  #  out.file <- paste("ResDESeq_",condA,"_vs_",condB,"_heatmap.pdf",sep="")
+  #}
+ 
   if(dim(htmp.dat)[1]>1 && dim(htmp.dat)[2]>1){
     ## make heatmap pdf
     if(!is.null(file)){

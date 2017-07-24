@@ -23,6 +23,8 @@ and may contain any other slots}
 
 \item{col.pal}{name of color palette; must be from list of RColorBrewer palettes
 Default: "Set3"}
+
+\item{horizontal}{logical indicating that bars should be horizontal; Default: TRUE}
 }
 \description{
 Plot distribution of reads across different genomic features
