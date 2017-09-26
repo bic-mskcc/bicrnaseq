@@ -87,11 +87,11 @@ bic.check.line.chart.data <- function(dat,dat2=NULL){
         stop("second data set contains non-numeric values")
       }
     )
-    if(!all(dim(dat) == dim(dat2))){
-      stop(paste("first and second data sets have different dimensions\n\tdim(dat) = ",
-                 dim(dat),"\tdim(dat2) = ",dim(dat2),sep="")
-          )
-    }
+    #if(!all(dim(dat) == dim(dat2))){
+    #  stop(paste("first and second data sets have different dimensions\n\tdim(dat) = ",
+    #             dim(dat),"\tdim(dat2) = ",dim(dat2),sep="")
+    #      )
+    #}
   }
   invisible(NULL)
 } 
@@ -300,7 +300,7 @@ bic.deseq.heatmap <- function(cds,file=NULL,num.gns=100,transform=FALSE){
   }
   heatmap.2(dat, col=hmcol, trace="none", margin=c(10,10),
             main=paste("Expression of the \n",num.gns," most highly expressed genes",sep=""),
-            cexRow=0.6,cexCol=1.0,keysize=1.5,key.title=NA)
+            cexRow=0.6,cex.main=0.8,cexCol=1.0,keysize=1.5,key.title=NA)
   par(cex.main=0.3)
   if(!is.null(file)){
     dev.off()
@@ -331,7 +331,7 @@ bic.sample.to.sample.distances <- function(cds,conds,file=NULL){
   if(!is.null(file)){
     pdf(file)
   }
-  heatmap.2(dist.mat, trace="none", col=rev(hmcol), margin=c(13,13), key.title=NA)
+  heatmap.2(dist.mat, cex.row=1.0,cex.main=1.0,cex.col=1.0, main="Sample to Sample Distances", trace="none", col=rev(hmcol), margin=c(13,13), key.title=NA)
   if(!is.null(file)){
     dev.off()
   }
@@ -353,7 +353,7 @@ bic.deseq.plot.pca <- function(cds,file=NULL){
   if(!is.null(file)){
     pdf(file)
   }
-  DESeq::plotPCA(vst,intgroup="condition")
+  DESeq::plotPCA(vst)
   if(!is.null(file)){
     dev.off()
   }
@@ -667,6 +667,9 @@ bic.plot.alignment.summary <- function(dat,position="stack",pct=FALSE,col.pal="S
 #' @param file.name      file name. Default: "tmp.pdf"
 #' @param title          Title of plot
 #' @param sample.labels  Vector of sample labels. Default: column names in matrix
+#' @param conds          vector of sample conditions, in same order as column names
+#'                       in matrix or sample.labels; if given, nodes will be colored
+#'                       according to conditions; Default: NULL
 #' @param width          plot width (see plot docs)
 #' @param height         plot height (see plot docs)
 #' @param lwd            line width
@@ -676,16 +679,51 @@ bic.plot.alignment.summary <- function(dat,position="stack",pct=FALSE,col.pal="S
 #' @param xlab           label of x axis
 #' @param ylab           label of y axis
 #' @export
-bic.pdf.hclust<-function(dat,file.name="tmp.pdf",title="",width=26,height=16,lwd=3,
-    cex.main=3,cex.lab=3,cex=3,xlab="",ylab="",sample.labels=NULL)
+bic.pdf.hclust<-function(dat,conds=NULL,file.name="tmp.pdf",title="",width=20,height=14,lwd=3,
+    cex.main=2.5,cex.lab=3.0,cex=3.0,xlab="",ylab="",sample.labels=NULL)
 {
-  if(is.null(sample.labels)){
-    sample.labels=colnames(dat)
+  if(!is.null(sample.labels)){
+    colnames(dat) <- sample.labels
   }
-  pdf(file.name,width=width,height=height)
-  plot(hclust(dist(t(dat))), lwd=lwd, main=paste(title), cex.main=cex.main,
-        xlab=xlab,ylab=ylab, cex.lab=cex.lab, cex=cex, labels=sample.labels)
-  dev.off()
+  h <- hclust(dist(t(dat)))
+  dend <- as.dendrogram(h)
+
+  lab.cex = 2.0
+  max.name = 1
+  ## get longest column name in order to ensure margins are correct
+  for(n in colnames(dat)){
+    if (nchar(n) > max.name){
+      max.name <- nchar(n)
+    }
+  }
+  ## adjust label size if number of samples is 20
+  if(ncol(dat) > 20){
+    lab.cex <- 30/ncol(dat)
+  }
+
+  dend <- dendextend::set(dend,"labels_cex",lab.cex)
+
+  ## if conditions are given, color points on leaves accordingly
+  if(!is.null(conds)){
+    names(conds) <- colnames(dat)
+    conds <- conds[labels(dend)]
+    pch <- c(19)
+    col=as.numeric(as.factor(conds))
+    dend <- dendextend::set(dend,"leaves_pch",pch)
+    dend <- dendextend::set(dend,"leaves_col",col)
+    dend <- dendextend::set(dend,"leaves_cex",lab.cex)
+  }
+
+  if(!is.null(file.name)){
+    pdf(file.name,width=width,height=height)
+  }
+  rmar <- max.name*(lab.cex/2)
+  par(oma=c(3,2,3,1))
+  par(mar=c(3,2,2,rmar))
+  plot(dend, horiz=T,lwd=lwd, main=title, cex.main=cex.main,xlab=xlab,ylab=ylab, cex.lab=lab.cex, cex=cex)
+  if(!is.null(file.name)){
+    dev.off()
+  }
 }
 
 
@@ -697,11 +735,15 @@ bic.pdf.hclust<-function(dat,file.name="tmp.pdf",title="",width=26,height=16,lwd
 #'                     a column represents a sample and a row represents
 #'                     a gene. may or may not contain "GeneID" and "GeneSymbol"
 #'                     columns.
+#' @param conds        vector of sample conditions, in same order as column names 
+#'                     in matrix or sample.labels; if given, nodes will be colored
+#'                     according to conditions; Default: NULL
+#' @param title        main title of plot
 #' @param log2         logical indicating whether data is on log2 scale (Default: FALSE)
 #' @param file.name    plot will be saved in this file; Default: 
 #'                     $PWD/counts_scaled_hclust.pdf
 #' @export
-bic.hclust.samples <- function(norm.counts,log2=FALSE,file.name=NULL){
+bic.hclust.samples <- function(norm.counts,conds=NULL,log2=FALSE,file.name=NULL,title=""){
 
   if("GeneID" %in% colnames(norm.counts) | 
      "GeneSymbol" %in% colnames(norm.counts)){
@@ -724,13 +766,13 @@ bic.hclust.samples <- function(norm.counts,log2=FALSE,file.name=NULL){
   } else {
     counts2hclust <- norm.counts
   }
-  sink("/dev/null")
   tryCatch({
-      bic.pdf.hclust(counts2hclust,file.name=file.name,title="All counts scaled using DESeq method")
-     }, error = function() {
-        cat("Error writing pdf file.")
-     }, finally = {
-       sink()
+   bic.pdf.hclust(counts2hclust,conds=conds,file.name=file.name,title=title)
+     }, error = function(err) {
+        stop(err)
+        traceback()
+     }, warning= function(war){
+        warn(war)
      }
   )
 
@@ -783,12 +825,12 @@ bic.mds.clust.samples <- function(norm.counts,log2=FALSE,file=NULL,conds=NULL,la
   }
 
   if(labels){
-    plot(md, col=as.factor(conds),main="",lwd=2.5,cex=1.5)
+    plot(md, col=as.factor(conds),main="",lwd=2.5,cex=1.5, main="Multidimensional Scaling (MDS)")
     legend("topleft", levels(as.factor(conds)),col=as.factor(levels(as.factor(conds))),pch=1,cex=1.2)
     text(md,colnames(counts2hclust),cex=0.9)
   } else {
-    plot(md, col=as.factor(conds),pch=as.numeric(as.factor(conds)),main="",lwd=2.5,cex=1.5)
-    legend("topleft", levels(as.factor(conds)),col=as.factor(levels(as.factor(conds))),pch=levels(as.numeric(as.factor(conds))),cex=1.2)
+    plot(md, col=as.factor(conds),pch=21,main="Multidimensional Scaling (MDS)",lwd=2.5,cex=1.5)
+    legend("topleft", levels(as.factor(conds)),col=seq(along=levels(as.factor(conds))),pch=21,cex=1.2)
   }
   if(!is.null(file)){
     dev.off()
@@ -860,7 +902,7 @@ bic.standard.heatmap <- function(norm.counts.matrix,condA,condB,genes=NULL,file=
   if(dim(htmp.dat)[1]>1 && dim(htmp.dat)[2]>1){
     ## make heatmap pdf
     if(!is.null(file)){
-      pdf(file,width=25,height=16)
+      pdf(file,width=16,height=16)
     }
     heatmap.2(htmp.dat - apply(htmp.dat, 1, mean), 
               trace='none', 
