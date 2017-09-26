@@ -551,9 +551,9 @@ bic.process.gsa.res <- function(gsaRes,max.p=0.1,fc2keep=log2(1.5),frac2keep=2,f
 
     indxDn <- which(tmp[,"p adj (dist.dir.dn)"] <= max.p)
     indxUp <- which(tmp[,"p adj (dist.dir.up)"] <= max.p)
-    colsDn <- c("Name","Genes (tot)", "Stat (dist.dir.dn)",
+    colsDn <- c("Name","Genes (tot)", "Stat (dist.dir)",
              "p adj (dist.dir.dn)","Genes (down)")
-    colsUp <- c("Name","Genes (tot)", "Stat (dist.dir.up)",
+    colsUp <- c("Name","Genes (tot)", "Stat (dist.dir)",
              "p adj (dist.dir.up)","Genes (up)")
     if(length(indxDn) >= 1){
       if(length(indxDn) == 1){
@@ -561,7 +561,7 @@ bic.process.gsa.res <- function(gsaRes,max.p=0.1,fc2keep=log2(1.5),frac2keep=2,f
       } else {
         tmpDn <- as.matrix(tmp[indxDn,colsDn])
       }
-      tmpDn <- as.matrix(tmpDn[order(abs(as.numeric(tmpDn[,"Stat (dist.dir.dn)"])),decreasing=T),])
+      tmpDn <- as.matrix(tmpDn[order(abs(as.numeric(tmpDn[,"Stat (dist.dir)"])),decreasing=T),])
       if(length(indxDn) == 1){
         tmpDn <- t(tmpDn)
       }
@@ -577,7 +577,7 @@ bic.process.gsa.res <- function(gsaRes,max.p=0.1,fc2keep=log2(1.5),frac2keep=2,f
       } else {
         tmpUp <- as.matrix(tmp[indxUp,colsUp])
       }
-      tmpUp <- as.matrix(tmpUp[order(abs(as.numeric(tmpUp[,"Stat (dist.dir.up)"])),decreasing=T),])
+      tmpUp <- as.matrix(tmpUp[order(abs(as.numeric(tmpUp[,"Stat (dist.dir)"])),decreasing=T),])
       if(length(indxUp) == 1){
         tmpUp <- t(tmpUp)
       }
@@ -673,15 +673,18 @@ bic.run.gsa <- function(species,deseq.res,min.gns=5,max.gns=1000,
     res <- deseq.res[,-1]  ## remove ensembl IDs; since this function only supports
                            ## human and mouse, we can be confident that the first
                            ## column always has ensembl IDs
-    fc  <- as.matrix(res[,c(1,3)])
+    fc  <- as.matrix(res[,c(1,4)])
     fc <- bic.average.by.name(fc)
 
     gsa.res <- runGSA(fc,geneSetStat="mean",gsc=gsc,
-                     gsSizeLim=c(min.gns,max.gns),nPerm=nPerm,directions=fc)
+                     gsSizeLim=c(min.gns,max.gns),nPerm=nPerm)#,directions=fc)
     #save(gsa.res,file="GSA_RESULTS.Rdata",compress=T)
     tab.res <- bic.process.gsa.res(gsa.res,max.p=max.p,
                                    fc2keep=fc2keep,frac2keep=frac2keep,fcQ=fcQ)
     if(!is.null(tab.res$gsa.tab.up)){
+      if(is.null(dim(tab.res$gsa.tab.up))){
+          tab.res$gsa.tab.up = t(as.matrix(tab.res$gsa.tab.up))
+      }
       up.res <- cbind(gs.cat,tab.res$gsa.tab.up)
       colnames(up.res)[1] <- "Gene Set Category" 
       if(is.null(all.up.res)){
@@ -691,9 +694,12 @@ bic.run.gsa <- function(species,deseq.res,min.gns=5,max.gns=1000,
       }
     }
     if(!is.null(tab.res$gsa.tab.dn)){
+      if(is.null(dim(tab.res$gsa.tab.dn))){
+        tab.res$gsa.tab.dn = t(as.matrix(tab.res$gsa.tab.dn))
+      }
       dn.res <- cbind(gs.cat,tab.res$gsa.tab.dn)
       colnames(dn.res)[1] <- "Gene Set Category"
-      if(is.null(all.up.res)){
+      if(is.null(all.dn.res)){
         all.dn.res <- dn.res
       } else {
         all.dn.res <- rbind(all.dn.res,dn.res)
