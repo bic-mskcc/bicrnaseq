@@ -353,7 +353,8 @@ bic.deseq.plot.pca <- function(cds,file=NULL){
   if(!is.null(file)){
     pdf(file)
   }
-  DESeq::plotPCA(vst)
+  plt <- DESeq::plotPCA(vst)
+  print(plt)
   if(!is.null(file)){
     dev.off()
   }
