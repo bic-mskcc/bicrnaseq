@@ -298,10 +298,10 @@ bic.deseq.heatmap <- function(cds,file=NULL,num.gns=100,transform=FALSE){
   if(!is.null(file)){
     pdf(file)
   }
+  par(cex.main=0.8)
   heatmap.2(dat, col=hmcol, trace="none", margin=c(10,10),
             main=paste("Expression of the \n",num.gns," most highly expressed genes",sep=""),
-            cexRow=0.6,cex.main=0.8,cexCol=1.0,keysize=1.5,key.title=NA)
-  par(cex.main=0.3)
+            cexRow=0.6,cexCol=1.0,keysize=1.5,key.title=NA)
   if(!is.null(file)){
     dev.off()
   }
@@ -331,7 +331,8 @@ bic.sample.to.sample.distances <- function(cds,conds,file=NULL){
   if(!is.null(file)){
     pdf(file)
   }
-  heatmap.2(dist.mat, cex.row=1.0,cex.main=1.0,cex.col=1.0, main="Sample to Sample Distances", trace="none", col=rev(hmcol), margin=c(13,13), key.title=NA)
+  par(cex.main=0.8)
+  heatmap.2(dist.mat, main="Sample to Sample Distances", trace="none", col=rev(hmcol), margin=c(13,13), key.title=NA)
   if(!is.null(file)){
     dev.off()
   }
@@ -826,7 +827,7 @@ bic.mds.clust.samples <- function(norm.counts,log2=FALSE,file=NULL,conds=NULL,la
   }
 
   if(labels){
-    plot(md, col=as.factor(conds),main="",lwd=2.5,cex=1.5, main="Multidimensional Scaling (MDS)")
+    plot(md, col=as.factor(conds),lwd=2.5,cex=1.5, main="Multidimensional Scaling (MDS)")
     legend("topleft", levels(as.factor(conds)),col=as.factor(levels(as.factor(conds))),pch=1,cex=1.2)
     text(md,colnames(counts2hclust),cex=0.9)
   } else {
@@ -905,11 +906,12 @@ bic.standard.heatmap <- function(norm.counts.matrix,condA,condB,genes=NULL,file=
     if(!is.null(file)){
       pdf(file,width=16,height=16)
     }
+    par(cex.main=1.4)
     heatmap.2(htmp.dat - apply(htmp.dat, 1, mean), 
               trace='none', 
               col=colorpanel(16,"green","black","red"),
               cexRow=0.9,
-              cexCol=1.2, 
+              #cexCol=2.0, 
               dendrogram="both",
               main=paste("Top Differentially Expressed Genes ",condA," vs ",condB,sep=""), 
               symbreaks=TRUE, 
