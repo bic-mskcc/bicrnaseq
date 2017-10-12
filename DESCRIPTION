@@ -1,6 +1,6 @@
 Package: bicrnaseq
 Title: MSKCC Bioinformatics Core RNASeq
-Version: 0.0.11
+Version: 0.0.2
 Author: Caitlin Jones [aut, cre]
 Maintainer: Caitlin Jones <byrne@cbio.mskcc.org>
 Description: All things RNASeq, as implemented by the Bioinformatics Core. Includes
