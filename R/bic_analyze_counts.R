@@ -158,11 +158,7 @@ bic.run.deseq.comparison <- function(countDataSet, conds, condA, condB,
     }
     rownames(ans)=ans[,1]
   } else {
-    cat(paste("\n===================================================\n
-  No genes pass the significant cutoff of ",max.p,
-  ,"\n  AND have sufficient mean number of reads across samples AND 
-  at least ", min.count, " reads in one condition\n
-===================================================\n",sep=""))
+    cat(paste0("\n===================================================\nNo genes pass the significant cutoff of ",max.p,"\n  AND have sufficient mean number of reads across samples AND at least ", min.count, " reads in one condition\n===================================================\n"))
     m=max(res[which(res$padj==min(res$padj)),"baseMeanA"],
           res[which(res$padj==min(res$padj)),"baseMeanB"])
     cat("Best corrected p.value =",min(res$padj),"\n")
