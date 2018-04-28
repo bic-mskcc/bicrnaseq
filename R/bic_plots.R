@@ -870,23 +870,27 @@ bic.standard.heatmap <- function(norm.counts.matrix,condA,condB,genes=NULL,file=
   } else {
     idHeader <- "GeneID"
   }
-  
-  ## extract data for the DE genes
-  htmp.dat <- dat[genes,grep(paste(idHeader,condA,condB,sep="|"),colnames(dat))]
 
-  ## remove duplicate genes
-  if(length(htmp.dat[which(duplicated(htmp.dat[,idHeader])),idHeader])>0){
-    htmp.dat <- htmp.dat[-which(duplicated(as.vector(htmp.dat[,idHeader]))),]
-  }
+  tryCatch({ 
+    ## extract data for the DE genes
+    htmp.dat <- dat[genes,grep(paste(idHeader,condA,condB,sep="|"),colnames(dat))]
 
-  ## remove any rows that have NAs
-  htmp.dat <- htmp.dat[complete.cases(htmp.dat),]
-  ## as long as gene symbols are unique, assign them
-  ## as rownames; if not, we'll have to average values
-  ## for genes that occur multiple times
-  rownames(htmp.dat) <- htmp.dat[,idHeader]
-  htmp.dat <- htmp.dat[,-1]
-  htmp.dat <- bic.matrix2numeric(htmp.dat)
+    ## remove duplicate genes
+    if(length(htmp.dat[which(duplicated(htmp.dat[,idHeader])),idHeader])>0){
+      htmp.dat <- htmp.dat[-which(duplicated(as.vector(htmp.dat[,idHeader]))),]
+    }
+
+    ## remove any rows that have NAs
+    htmp.dat <- htmp.dat[complete.cases(htmp.dat),]
+    ## as long as gene symbols are unique, assign them
+    ## as rownames; if not, we'll have to average values
+    ## for genes that occur multiple times
+    rownames(htmp.dat) <- htmp.dat[,idHeader]
+    htmp.dat <- htmp.dat[,-1]
+    htmp.dat <- bic.matrix2numeric(htmp.dat)
+  }, err = function(){ 
+     warning(paste0("Can not generate heatmap for ",condA," vs ",condB))
+  })
 
   ## replace any zeros with ones before taking log2
   htmp.dat[htmp.dat==0] <- 1

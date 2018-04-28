@@ -158,11 +158,11 @@ bic.run.deseq.comparison <- function(countDataSet, conds, condA, condB,
     }
     rownames(ans)=ans[,1]
   } else {
-    cat(paste0("\n===================================================\nNo genes pass the significant cutoff of ",max.p,"\n  AND have sufficient mean number of reads across samples AND at least ", min.count, " reads in one condition\n===================================================\n"))
-    m=max(res[which(res$padj==min(res$padj)),"baseMeanA"],
-          res[which(res$padj==min(res$padj)),"baseMeanB"])
-    cat("Best corrected p.value =",min(res$padj),"\n")
-    cat("with max number of counts", m, "\n")
+    cat(paste0("\n===================================================\nNo genes pass the significant cutoff of ", max.p, "\n  AND have sufficient mean number of reads across samples\n AND at least ", min.count, " reads in one condition\n===================================================\n"))
+    #m=max(res[which(res$padj==min(res$padj)),"baseMeanA"],
+    #      res[which(res$padj==min(res$padj)),"baseMeanB"])
+    #cat("Best corrected p.value =",min(res$padj),"\n")
+    #cat("with max number of counts", m, "\n")
     cat("\n\n")
   }
 
@@ -287,13 +287,21 @@ bic.get.deseq.cds <- function(raw.counts, conds,
              cds <- tryCatch({
                   estimateDispersions(cds,fit=fitType,method='pooled',sharingMode=sharingMode)
                }, error = function(x){
-                  stop(paste("Both methods '",method,"' and 'pooled' failed.",sep=""))
-                  quit(save="no",status=15,runLast=TRUE)
-               }
-             )
+                  if(!method == "blind"){
+                    warning(paste("method='",method,"' did not work. Trying method='blind'",sep=""))
+                    cds <- tryCatch({
+                         estimateDispersions(cds,fit=fitType,method='blind',sharingMode='fit-only')
+                    }, error = function(x){
+                         warning(paste("All methods '",method,"', 'pooled' and 'blind' failed.",sep=""))
+                         #quit(save="no",status=15,runLast=TRUE)
+                         return(NULL)
+                    })
+                  }
+               })
            } else {
-             stop("method 'pooled' did not work. Please try another method.")
-             quit(save="no",status=15,runLast=TRUE)
+             warning("method 'pooled' did not work. Please try another method.")
+             return(NULL)
+             #quit(save="no",status=15,runLast=TRUE)
            }   
          })
   cat("Done.\n")
@@ -324,6 +332,8 @@ bic.write.normalized.counts.file <- function(norm.counts.mat,file.name){
 #' @return Nothing.   Files are written.
 #' @export
 bic.write.deseq.results <- function(res, file.name, orderPvalQ=FALSE){
+
+  head(res)
 
   ## Sort results  
   if(orderPvalQ){
